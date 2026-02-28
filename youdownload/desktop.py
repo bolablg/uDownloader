@@ -1,9 +1,8 @@
 import sys
 import asyncio
 import logging
-from pathlib import Path
 from datetime import datetime
-from typing import Optional, Dict, Any
+from typing import Dict, Any
 
 from PyQt6.QtWidgets import (
     QApplication,
@@ -17,23 +16,17 @@ from PyQt6.QtWidgets import (
     QComboBox,
     QCheckBox,
     QLabel,
-    QListWidget,
-    QListWidgetItem,
     QTableWidget,
     QTableWidgetItem,
     QDialog,
     QSpinBox,
-    QFileDialog,
-    QScrollArea,
     QMessageBox,
-    QSplitter,
-    QProgressBar,
     QDialogButtonBox,
 )
-from PyQt6.QtCore import Qt, pyqtSignal, QObject, QThread, QTimer
-from PyQt6.QtGui import QColor, QFont, QIcon
+from PyQt6.QtCore import pyqtSignal, QObject, QThread
+from PyQt6.QtGui import QFont
 
-from youdownload.config import load_config, save_config, CONFIG_FILE, DEFAULT_CONFIG
+from youdownload.config import load_config, save_config
 from youdownload.history import DownloadHistory
 from youdownload.async_downloader import AsyncDownloader
 

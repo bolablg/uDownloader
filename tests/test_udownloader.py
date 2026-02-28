@@ -7,7 +7,6 @@ from youdownload.history import DownloadHistory
 from youdownload.async_downloader import AsyncDownloader
 from pathlib import Path
 import tempfile
-import json
 
 
 class TestVersion:

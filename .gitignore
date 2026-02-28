@@ -140,5 +140,8 @@ downloads/
 *.mp4
 *.mp3
 *.webm
-youdownload/__pycache__
+# explicit package cache (redundant with global __pycache__/ pattern)
+# youdownload/__pycache__/
+
+# Python bytecode files (redundant with earlier rules but included for clarity)
 *.pyc

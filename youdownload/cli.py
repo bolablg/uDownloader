@@ -1,10 +1,9 @@
 import argparse
 import logging
 import sys
-import json
 
 from .downloader import download
-from .config import load_config, save_config, create_default_config, CONFIG_FILE
+from .config import load_config, create_default_config, CONFIG_FILE
 
 
 def main():
