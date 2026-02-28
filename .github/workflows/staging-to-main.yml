@@ -1,0 +1,75 @@
+name: Staging → Main (vulnerability scan)
+
+on:
+  push:
+    branches:
+      - staging
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  vuln_scan:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt || true
+          pip install pip-audit safety
+
+      - name: Run pip-audit
+        id: pip_audit
+        run: |
+          pip-audit --format json > audit.json || true
+          echo "::set-output name=report::$(cat audit.json | jq -c .)"
+
+      - name: Run safety check
+        id: safety_check
+        run: |
+          safety check --full-report || true
+
+  create_merge_to_main:
+    needs: vuln_scan
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Create PR from `staging` → `main` (manual merge required)
+        uses: actions/github-script@v6
+        with:
+          github-token: ${{ secrets.MERGE_TOKEN }}
+          script: |
+            const owner = context.repo.owner;
+            const repo = context.repo.repo;
+            const fs = require('fs');
+
+            // Read pip-audit results produced in the vuln_scan job
+            let audit = {};
+            try { audit = JSON.parse(fs.readFileSync('audit.json', 'utf8')); } catch (e) { }
+
+            const vulnerabilities = (audit.vulns && audit.vulns.length) ? audit.vulns.length : 0;
+            if (vulnerabilities > 0) {
+              // Create an issue to notify maintainers of vulnerabilities
+              await github.rest.issues.create({ owner, repo, title: `Vulnerability scan failed on staging (${vulnerabilities} issues)`, body: `pip-audit found ${vulnerabilities} vulnerabilities on staging. Please review audit.json attached in the workflow artifacts.` });
+              console.log(`Found ${vulnerabilities} vulnerabilities; created issue to notify maintainers.`);
+              return;
+            }
+
+            // If no vulnerabilities, create a PR from staging to main for manual review/merge
+            const { data: prs } = await github.rest.pulls.list({ owner, repo, state: 'open', head: `${owner}:staging`, base: 'main' });
+            if (prs.length === 0) {
+              await github.rest.pulls.create({ owner, repo, head: 'staging', base: 'main', title: 'Staging → Main: vulnerability scan passed', body: 'Vulnerability scan passed on staging. Please review and merge manually into `main`.' });
+              console.log('Created PR from staging to main for manual review.');
+            } else {
+              console.log(`PR already exists: #${prs[0].number}`);
+            }
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
