@@ -30,7 +30,6 @@ from youdownload.config import load_config, save_config
 from youdownload.history import DownloadHistory
 from youdownload.async_downloader import AsyncDownloader
 
-
 logger = logging.getLogger(__name__)
 
 
