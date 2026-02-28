@@ -9,26 +9,26 @@ logger = logging.getLogger(__name__)
 
 def detect_platform(url: str) -> str:
     """Detect the platform from the given URL.
-    
+
     Returns:
         Platform name: 'YouTube', 'Twitter', 'Instagram', etc.
     """
     url_lower = url.lower()
-    
-    if 'youtube.com' in url_lower or 'youtu.be' in url_lower:
-        return 'YouTube'
-    elif 'twitter.com' in url_lower or 'x.com' in url_lower:
-        return 'Twitter'
-    elif 'facebook.com' in url_lower or 'fb.com' in url_lower or 'fb.me' in url_lower:
-        return 'Facebook'
-    elif 'instagram.com' in url_lower:
-        return 'Instagram'
-    elif 'tiktok.com' in url_lower:
-        return 'TikTok'
-    elif 'vimeo.com' in url_lower:
-        return 'Vimeo'
+
+    if "youtube.com" in url_lower or "youtu.be" in url_lower:
+        return "YouTube"
+    elif "twitter.com" in url_lower or "x.com" in url_lower:
+        return "Twitter"
+    elif "facebook.com" in url_lower or "fb.com" in url_lower or "fb.me" in url_lower:
+        return "Facebook"
+    elif "instagram.com" in url_lower:
+        return "Instagram"
+    elif "tiktok.com" in url_lower:
+        return "TikTok"
+    elif "vimeo.com" in url_lower:
+        return "Vimeo"
     else:
-        return 'Other'
+        return "Other"
 
 
 def download(
@@ -54,7 +54,7 @@ def download(
     """
     if config is None:
         config = {}
-    
+
     # Detect platform and create platform-specific subfolder
     platform = detect_platform(url)
     platform_dir = os.path.join(output_dir, platform)
@@ -71,16 +71,18 @@ def download(
     if audio_only:
         audio_quality = config.get("audio_quality", "192")
         # convert video to mp3
-        ydl_opts.update({
-            "format": "bestaudio/best",
-            "postprocessors": [
-                {
-                    "key": "FFmpegExtractAudio",
-                    "preferredcodec": "mp3",
-                    "preferredquality": audio_quality,
-                }
-            ],
-        })
+        ydl_opts.update(
+            {
+                "format": "bestaudio/best",
+                "postprocessors": [
+                    {
+                        "key": "FFmpegExtractAudio",
+                        "preferredcodec": "mp3",
+                        "preferredquality": audio_quality,
+                    }
+                ],
+            }
+        )
     else:
         video_quality = config.get("video_quality", "best")
         format_pref = {
@@ -90,13 +92,15 @@ def download(
             "480p": "bestvideo[height<=480]+bestaudio/best",
             "360p": "bestvideo[height<=360]+bestaudio/best",
         }
-        ydl_opts.update({
-            "format": format_pref.get(video_quality, "bestvideo+bestaudio/best"),
-        })
+        ydl_opts.update(
+            {
+                "format": format_pref.get(video_quality, "bestvideo+bestaudio/best"),
+            }
+        )
 
     attempt = 0
     last_error = None
-    
+
     while attempt < retries:
         with YoutubeDL(ydl_opts) as ydl:
             try:
@@ -113,10 +117,12 @@ def download(
                 last_error = e
                 attempt += 1
                 if attempt < retries:
-                    logger.warning(f"Download failed (attempt {attempt}/{retries}): {e}. Retrying...")
+                    logger.warning(
+                        f"Download failed (attempt {attempt}/{retries}): {e}. Retrying..."
+                    )
                 else:
                     logger.error(f"Download failed after {retries} attempts: {e}")
-    
+
     raise last_error
 
 

@@ -1,5 +1,10 @@
 # uDownloader
 
+[![Python 3.8+](https://img.shields.io/badge/python-3.8%2B-blue)](https://www.python.org/downloads/)
+[![Version 0.1.0](https://img.shields.io/badge/version-0.1.0-green)](./docs/CHANGELOG.md)
+[![License MIT](https://img.shields.io/badge/license-MIT-blue)](LICENSE)
+[![GitHub CI/CD](https://github.com/yourusername/uDownloader/workflows/Tests/badge.svg)](https://github.com/yourusername/uDownloader/actions)
+
 A fast, powerful Python application to download YouTube videos or audio. Supports single videos or entire playlists with both CLI and **Desktop GUI**. Uses `yt-dlp` for efficiency and modern format handling.
 
 **Available as a pip-installable package!** Install with `pip install udownloader`
@@ -51,6 +56,28 @@ After installation, you'll have two commands available:
 - `udownloader` - CLI version
 - `udownloader-desktop` - Desktop GUI version
 
+
+## Technology Stack
+
+| Component | Technology | Purpose |
+|-----------|-----------|---------|
+| **Language** | Python 3.8+ | Core application |
+| **Video Downloading** | yt-dlp 2024.8.2+ | Format detection & download |
+| **Desktop GUI** | PyQt6 6.6.0+ | Modern graphical interface |
+| **Async Processing** | asyncio + ThreadPoolExecutor | Concurrent downloads |
+| **Configuration** | JSON | User settings persistence |
+| **History Tracking** | JSON | Download records database |
+| **Testing** | pytest + pytest-cov | Unit testing & coverage |
+| **Code Quality** | black + flake8 | Formatting & linting |
+| **Packaging** | setuptools + wheel | PyPI distribution |
+| **CI/CD** | GitHub Actions | Automated testing & publishing |
+
+**Key Dependencies:**
+- `yt-dlp` - Video downloading engine
+- `PyQt6` - Desktop application framework
+- `pytest` - Testing framework (dev only)
+- `black` - Code formatter (dev only)
+- `flake8` - Code linter (dev only)
 
 ## Quick Start
 
@@ -144,3 +171,21 @@ You can edit this file directly to change defaults, or override with command-lin
 - **`uDownloaderApp`** is the main desktop application with multi-tab interface
 - **`DownloadWorker`** runs downloads in separate thread to keep UI responsive
 
+## Documentation
+
+Comprehensive documentation is available in the [docs](docs/) folder:
+
+- **[Installation Guide](docs/INSTALLATION.md)** - Platform-specific installation instructions
+- **[Quick Reference](docs/QUICK_REFERENCE.md)** - Commands, workflows, and FAQ
+- **[Contributing Guide](docs/CONTRIBUTING.md)** - Development setup and contribution guidelines
+- **[CI/CD Setup](docs/CICD_SETUP.md)** - GitHub Actions and testing infrastructure
+- **[Changelog](docs/CHANGELOG.md)** - Version history and planned features
+- **[Security Policy](docs/SECURITY.md)** - Vulnerability reporting and security practices
+
+## License
+
+uDownloader is licensed under the MIT License - see [LICENSE](LICENSE) file for details.
+
+---
+
+**Made with ❤️ for video downloaders everywhere**

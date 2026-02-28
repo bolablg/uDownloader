@@ -11,37 +11,37 @@ logger = logging.getLogger(__name__)
 
 class AsyncDownloader:
     """Handles async/concurrent downloads with progress tracking."""
-    
+
     def __init__(self, max_concurrent: int = 1):
         """
         Initialize async downloader.
-        
+
         Args:
             max_concurrent: Maximum number of concurrent downloads
         """
         self.max_concurrent = max_concurrent
         self.executor = ThreadPoolExecutor(max_workers=max_concurrent)
         self.active_downloads: Dict[str, bool] = {}
-    
+
     def detect_platform(self, url: str) -> str:
         """Detect the platform from the given URL."""
         url_lower = url.lower()
-        
-        if 'youtube.com' in url_lower or 'youtu.be' in url_lower:
-            return 'YouTube'
-        elif 'twitter.com' in url_lower or 'x.com' in url_lower:
-            return 'Twitter'
-        elif 'facebook.com' in url_lower or 'fb.com' in url_lower or 'fb.me' in url_lower:
-            return 'Facebook'
-        elif 'instagram.com' in url_lower:
-            return 'Instagram'
-        elif 'tiktok.com' in url_lower:
-            return 'TikTok'
-        elif 'vimeo.com' in url_lower:
-            return 'Vimeo'
+
+        if "youtube.com" in url_lower or "youtu.be" in url_lower:
+            return "YouTube"
+        elif "twitter.com" in url_lower or "x.com" in url_lower:
+            return "Twitter"
+        elif "facebook.com" in url_lower or "fb.com" in url_lower or "fb.me" in url_lower:
+            return "Facebook"
+        elif "instagram.com" in url_lower:
+            return "Instagram"
+        elif "tiktok.com" in url_lower:
+            return "TikTok"
+        elif "vimeo.com" in url_lower:
+            return "Vimeo"
         else:
-            return 'Other'
-    
+            return "Other"
+
     def _download_sync(
         self,
         url: str,
@@ -53,11 +53,11 @@ class AsyncDownloader:
         download_id: str,
     ) -> Dict[str, Any]:
         """Synchronous download function to run in thread pool."""
-        
+
         platform = self.detect_platform(url)
         platform_dir = os.path.join(output_dir, platform)
         os.makedirs(platform_dir, exist_ok=True)
-        
+
         ydl_opts = {
             "outtmpl": os.path.join(platform_dir, "%(title)s.%(ext)s"),
             "quiet": False,
@@ -65,19 +65,21 @@ class AsyncDownloader:
             "progress_hooks": [progress_callback] if progress_callback else [],
             "no_warnings": False,
         }
-        
+
         if audio_only:
             audio_quality = config.get("audio_quality", "192")
-            ydl_opts.update({
-                "format": "bestaudio/best",
-                "postprocessors": [
-                    {
-                        "key": "FFmpegExtractAudio",
-                        "preferredcodec": "mp3",
-                        "preferredquality": audio_quality,
-                    }
-                ],
-            })
+            ydl_opts.update(
+                {
+                    "format": "bestaudio/best",
+                    "postprocessors": [
+                        {
+                            "key": "FFmpegExtractAudio",
+                            "preferredcodec": "mp3",
+                            "preferredquality": audio_quality,
+                        }
+                    ],
+                }
+            )
         else:
             video_quality = config.get("video_quality", "best")
             format_pref = {
@@ -87,13 +89,15 @@ class AsyncDownloader:
                 "480p": "bestvideo[height<=480]+bestaudio/best",
                 "360p": "bestvideo[height<=360]+bestaudio/best",
             }
-            ydl_opts.update({
-                "format": format_pref.get(video_quality, "bestvideo+bestaudio/best"),
-            })
-        
+            ydl_opts.update(
+                {
+                    "format": format_pref.get(video_quality, "bestvideo+bestaudio/best"),
+                }
+            )
+
         attempt = 0
         last_error = None
-        
+
         while attempt < retries:
             if not self.active_downloads.get(download_id, True):
                 return {
@@ -103,13 +107,13 @@ class AsyncDownloader:
                     "error": "Download cancelled",
                     "title": "Unknown",
                 }
-            
+
             with YoutubeDL(ydl_opts) as ydl:
                 try:
                     logger.info(f"Starting download (attempt {attempt + 1}/{retries}): {url}")
                     info = ydl.extract_info(url, download=True)
                     logger.info(f"Download succeeded: {info.get('title', 'Unknown')}")
-                    
+
                     return {
                         "success": True,
                         "platform": platform,
@@ -123,7 +127,7 @@ class AsyncDownloader:
                     attempt += 1
                     if attempt < retries:
                         logger.warning(f"Download failed (attempt {attempt}/{retries}): {e}")
-        
+
         return {
             "success": False,
             "platform": platform,
@@ -131,7 +135,7 @@ class AsyncDownloader:
             "error": str(last_error),
             "title": "Unknown",
         }
-    
+
     async def download_async(
         self,
         url: str,
@@ -144,7 +148,7 @@ class AsyncDownloader:
     ) -> Dict[str, Any]:
         """
         Asynchronously download video/audio.
-        
+
         Args:
             url: The video or playlist URL
             output_dir: Directory where files will be saved
@@ -153,16 +157,16 @@ class AsyncDownloader:
             progress_callback: Function to call with progress updates
             retries: Number of retries on failure
             download_id: Unique ID for tracking this download
-            
+
         Returns:
             Dictionary with download result
         """
         if config is None:
             config = {}
-        
+
         if download_id:
             self.active_downloads[download_id] = True
-        
+
         loop = asyncio.get_event_loop()
         try:
             result = await loop.run_in_executor(
@@ -180,7 +184,7 @@ class AsyncDownloader:
         finally:
             if download_id:
                 self.active_downloads.pop(download_id, None)
-    
+
     async def download_multiple_async(
         self,
         urls: List[str],
@@ -192,7 +196,7 @@ class AsyncDownloader:
     ) -> List[Dict[str, Any]]:
         """
         Download multiple videos concurrently.
-        
+
         Args:
             urls: List of URLs to download
             output_dir: Directory where files will be saved
@@ -200,7 +204,7 @@ class AsyncDownloader:
             config: Configuration dictionary
             progress_callback: Function to call with progress updates
             retries: Number of retries on failure
-            
+
         Returns:
             List of download results
         """
@@ -216,9 +220,9 @@ class AsyncDownloader:
             )
             for i, url in enumerate(urls)
         ]
-        
+
         return await asyncio.gather(*tasks)
-    
+
     def cancel_download(self, download_id: str) -> None:
         """Cancel a download."""
         if download_id in self.active_downloads:

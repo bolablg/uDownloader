@@ -191,4 +191,4 @@ After installation:
 2. **Desktop Users**: Launch `udownloader-desktop` and configure settings in the app
 3. **First Download**: Start a download and check `./uDownload` folder for results
 
-For more information, see [README.md](README.md)
+For more information, see [README.md](../README.md)

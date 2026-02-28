@@ -24,53 +24,53 @@ DEFAULT_CONFIG = {
 
 def load_config(config_path: Optional[str] = None) -> Dict[str, Any]:
     """Load configuration from file or return defaults.
-    
+
     Args:
         config_path: Optional path to custom config file.
-        
+
     Returns:
         Configuration dictionary.
     """
     config = DEFAULT_CONFIG.copy()
-    
+
     # Try provided path first
     if config_path and Path(config_path).exists():
         try:
-            with open(config_path, 'r') as f:
+            with open(config_path, "r") as f:
                 user_config = json.load(f)
                 config.update(user_config)
                 logger.info(f"Loaded config from {config_path}")
                 return config
         except Exception as e:
             logger.warning(f"Failed to load config from {config_path}: {e}")
-    
+
     # Try default location
     if CONFIG_FILE.exists():
         try:
-            with open(CONFIG_FILE, 'r') as f:
+            with open(CONFIG_FILE, "r") as f:
                 user_config = json.load(f)
                 config.update(user_config)
                 logger.info(f"Loaded config from {CONFIG_FILE}")
                 return config
         except Exception as e:
             logger.warning(f"Failed to load config from {CONFIG_FILE}: {e}")
-    
+
     logger.info("Using default configuration")
     return config
 
 
 def save_config(config: Dict[str, Any], config_path: Optional[str] = None) -> None:
     """Save configuration to file.
-    
+
     Args:
         config: Configuration dictionary.
         config_path: Optional path to save. Uses default location if not provided.
     """
     target_path = Path(config_path) if config_path else CONFIG_FILE
     target_path.parent.mkdir(parents=True, exist_ok=True)
-    
+
     try:
-        with open(target_path, 'w') as f:
+        with open(target_path, "w") as f:
             json.dump(config, f, indent=2)
         logger.info(f"Saved config to {target_path}")
     except Exception as e:

@@ -13,35 +13,32 @@ def main():
     )
     parser.add_argument("--url", "-u", required=False, help="YouTube video or playlist URL")
     parser.add_argument(
-        "--output", "-o", default=None, help="Directory to save downloads (default from config or 'uDownload')"
+        "--output",
+        "-o",
+        default=None,
+        help="Directory to save downloads (default from config or 'uDownload')",
     )
+    parser.add_argument("--audio", "-a", action="store_true", help="Download audio only (mp3)")
     parser.add_argument(
-        "--audio", "-a", action="store_true", help="Download audio only (mp3)"
-    )
-    parser.add_argument(
-        "--quality", "-q",
+        "--quality",
+        "-q",
         choices=["best", "1080p", "720p", "480p", "360p"],
         default=None,
-        help="Video quality preference"
+        help="Video quality preference",
     )
     parser.add_argument(
-        "--config", "-c",
-        default=None,
-        help=f"Path to config file (default: {CONFIG_FILE})"
+        "--config", "-c", default=None, help=f"Path to config file (default: {CONFIG_FILE})"
     )
     parser.add_argument(
-        "--init-config",
-        action="store_true",
-        help="Create default config file and exit"
+        "--init-config", action="store_true", help="Create default config file and exit"
     )
+    parser.add_argument("--verbose", "-v", action="store_true", help="Show verbose logging")
     parser.add_argument(
-        "--verbose", "-v", action="store_true", help="Show verbose logging"
-    )
-    parser.add_argument(
-        "--retries", "-r",
+        "--retries",
+        "-r",
         type=int,
         default=3,
-        help="Number of retries on download failure (default: 3)"
+        help="Number of retries on download failure (default: 3)",
     )
 
     args = parser.parse_args()
@@ -62,7 +59,7 @@ def main():
 
     # Load configuration
     config = load_config(args.config)
-    
+
     # CLI args override config file
     if args.output:
         config["output_dir"] = args.output
