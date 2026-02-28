@@ -7,7 +7,7 @@ Thank you for your interest in contributing to uDownloader! We welcome contribut
 1. **Fork the repository** on GitHub
 2. **Clone your fork** locally:
    ```bash
-   git clone https://github.com/YOUR_USERNAME/uDownloader.git
+   git clone https://github.com/bolablg/uDownloader.git
    cd uDownloader
    ```
 
