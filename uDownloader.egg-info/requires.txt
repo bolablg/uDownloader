@@ -1,0 +1,12 @@
+yt-dlp>=2024.8.2
+PyQt6>=6.6.0
+
+[cli]
+
+[desktop]
+PyQt6>=6.6.0
+
+[dev]
+pytest>=7.0
+black>=22.0
+flake8>=4.0

@@ -1,0 +1,3 @@
+[console_scripts]
+udownloader = youdownload.cli:main
+udownloader-desktop = youdownload.desktop:main

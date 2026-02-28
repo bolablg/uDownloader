@@ -1,0 +1,65 @@
+[build-system]
+requires = ["setuptools>=42", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "uDownloader"
+version = "0.1.0"
+description = "Fast, async YouTube/Instagram/TikTok downloader with desktop GUI and CLI"
+readme = "README.md"
+requires-python = ">=3.8"
+license = {text = "MIT"}
+authors = [{name = "Developer"}]
+keywords = ["youtube", "instagram", "downloader", "video", "audio", "desktop"]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Environment :: X11 Applications :: Qt",
+    "Intended Audience :: End Users/Desktop",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Multimedia :: Video",
+    "Topic :: Utilities",
+]
+
+dependencies = [
+    "yt-dlp>=2024.8.2",
+    "PyQt6>=6.6.0",
+]
+
+[project.optional-dependencies]
+cli = []
+desktop = ["PyQt6>=6.6.0"]
+dev = [
+    "pytest>=7.0",
+    "black>=22.0",
+    "flake8>=4.0",
+]
+
+[project.urls]
+Homepage = "https://github.com/yourusername/uDownloader"
+Documentation = "https://github.com/yourusername/uDownloader#readme"
+Repository = "https://github.com/yourusername/uDownloader.git"
+Issues = "https://github.com/yourusername/uDownloader/issues"
+
+[project.scripts]
+udownloader = "youdownload.cli:main"
+udownloader-desktop = "youdownload.desktop:main"
+
+[tool.setuptools]
+packages = ["youdownload"]
+
+[tool.setuptools.package-data]
+youdownload = []
+
+[tool.black]
+line-length = 100
+target-version = ['py38', 'py39', 'py310', 'py311', 'py312']
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+python_files = ["test_*.py"]
