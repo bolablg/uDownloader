@@ -7,6 +7,5 @@ or: python launcher_desktop.py
 
 from youdownload.desktop import main
 
-
 if __name__ == "__main__":
     main()
