@@ -2,7 +2,7 @@
 
 ## Reporting a Vulnerability
 
-If you discover a security vulnerability in uDownloader, please email security@example.com instead of using the issue tracker.
+If you discover a security vulnerability in uDownloader, please email hello@bolablg.com instead of using the issue tracker.
 
 Please include:
 - Description of the vulnerability
@@ -41,5 +41,5 @@ safety check
 
 ## Contact
 
-For security inquiries: security@example.com
+For security inquiries: hello@bolablg.com
 For general questions: See [CONTRIBUTING.md](CONTRIBUTING.md)
