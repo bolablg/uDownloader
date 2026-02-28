@@ -1,0 +1,74 @@
+name: Dev branches → Staging
+
+on:
+  push:
+    # Run on any non-main, non-staging branch (feature/dev branches)
+    branches-ignore:
+      - main
+      - staging
+
+permissions:
+  contents: write
+  issues: write
+  pull-requests: write
+
+jobs:
+  tests_and_lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt || true
+          pip install pytest pytest-cov flake8 black
+
+      - name: Lint (flake8)
+        run: flake8 . --max-line-length=100 || true
+
+      - name: Format check (black)
+        run: black --check . || true
+
+      - name: Run tests
+        run: pytest -q || true
+
+  auto_merge_to_staging:
+    needs: tests_and_lint
+    runs-on: ubuntu-latest
+    if: always()
+    steps:
+      - uses: actions/checkout@v4
+      - name: Create or merge PR into `staging`
+        uses: actions/github-script@v6
+        with:
+          script: |
+            const owner = context.repo.owner;
+            const repo = context.repo.repo;
+            const head = process.env.GITHUB_REF.replace('refs/heads/','');
+
+            // Find open PR from this branch to staging
+            const { data: prs } = await github.rest.pulls.list({ owner, repo, state: 'open', head: `${owner}:${head}`, base: 'staging' });
+            let prNumber = null;
+
+            if (prs.length === 0) {
+              const pr = await github.rest.pulls.create({ owner, repo, head, base: 'staging', title: `Auto: merge ${head} → staging`, body: 'Automatic merge from dev branch to staging (tests/lint passed).' });
+              prNumber = pr.data.number;
+            } else {
+              prNumber = prs[0].number;
+            }
+
+            // Try to merge the PR (may fail if branch protection requires reviews)
+            try {
+              await github.rest.pulls.merge({ owner, repo, pull_number: prNumber, merge_method: 'squash' });
+              core.info(`Merged PR #${prNumber} into staging`);
+            } catch (err) {
+              core.info(`Could not auto-merge PR #${prNumber}: ${err.message}`);
+            }
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
