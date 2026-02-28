@@ -30,13 +30,13 @@ jobs:
           pip install pytest pytest-cov flake8 black
 
       - name: Lint (flake8)
-        run: flake8 . --max-line-length=100 || true
+        run: flake8 . --max-line-length=100
 
       - name: Format check (black)
-        run: black --check . || true
+        run: black --check .
 
       - name: Run tests
-        run: pytest -q || true
+        run: pytest -q
 
   auto_merge_to_staging:
     needs: tests_and_lint
