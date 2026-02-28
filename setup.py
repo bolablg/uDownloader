@@ -5,6 +5,6 @@ Modern approach using pyproject.toml is preferred.
 This file exists for compatibility.
 """
 
-from setuptools import setup, find_packages
+from setuptools import setup
 
 setup()
