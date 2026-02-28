@@ -36,8 +36,9 @@ cli = []
 desktop = ["PyQt6>=6.6.0"]
 dev = [
     "pytest>=7.0",
+    "pytest-cov>=4.0",
     "black>=22.0",
-    "flake8>=4.0",
+    "ruff>=0.1.0",
 ]
 
 [project.urls]
@@ -60,6 +61,13 @@ youdownload = []
 line-length = 100
 target-version = ['py38', 'py39', 'py310', 'py311', 'py312']
 
+[tool.ruff]
+line-length = 100
+target-version = "py38"
+
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 python_files = ["test_*.py"]
+
+[tool.ruff.lint]
+select = ["E", "F", "W"]  # pycodestyle, Pyflakes, warnings
