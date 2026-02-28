@@ -3,7 +3,7 @@
 [![Python 3.8+](https://img.shields.io/badge/python-3.8%2B-blue)](https://www.python.org/downloads/)
 [![Version 0.1.0](https://img.shields.io/badge/version-0.1.0-green)](./docs/CHANGELOG.md)
 [![License MIT](https://img.shields.io/badge/license-MIT-blue)](LICENSE)
-[![GitHub CI/CD](https://github.com/yourusername/uDownloader/workflows/Tests/badge.svg)](https://github.com/yourusername/uDownloader/actions)
+[![GitHub CI/CD](https://github.com/bolablg/uDownloader/workflows/Tests/badge.svg)](https://github.com/bolablg/uDownloader/actions)
 
 A fast, powerful Python application to download YouTube videos or audio. Supports single videos or entire playlists with both CLI and **Desktop GUI**. Uses `yt-dlp` for efficiency and modern format handling.
 
