@@ -3,7 +3,6 @@ import logging
 from typing import Dict, Any, Callable
 from yt_dlp import YoutubeDL
 
-
 logger = logging.getLogger(__name__)
 
 
