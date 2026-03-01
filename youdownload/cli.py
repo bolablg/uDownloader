@@ -26,6 +26,12 @@ def main():
         help="Video quality preference",
     )
     parser.add_argument(
+        "--video-format",
+        choices=["original", "mp4", "mkv", "webm"],
+        default=None,
+        help="Output video container format (ignored for --audio)",
+    )
+    parser.add_argument(
         "--config", "-c", default=None, help=f"Path to config file (default: {CONFIG_FILE})"
     )
     parser.add_argument(
@@ -38,6 +44,12 @@ def main():
         type=int,
         default=3,
         help="Number of retries on download failure (default: 3)",
+    )
+    parser.add_argument(
+        "--cookies-browser",
+        choices=["chrome", "firefox", "safari", "edge", "brave", "chromium"],
+        default=None,
+        help="Browser to pull cookies from for auth-gated platforms like X/Twitter",
     )
 
     args = parser.parse_args()
@@ -64,8 +76,12 @@ def main():
         config["output_dir"] = args.output
     if args.quality:
         config["video_quality"] = args.quality
+    if args.video_format:
+        config["format_preference"] = args.video_format
     if args.audio:
         config["audio_only"] = True
+    if args.cookies_browser:
+        config["cookies_browser"] = args.cookies_browser
     config["verbose"] = args.verbose
 
     try:
