@@ -62,6 +62,7 @@ class DownloadWorker(QObject):
         """Run a download."""
         asyncio.set_event_loop(self.loop)
         try:
+
             def progress_hook(progress_data: Dict[str, Any]):
                 if self.progress_callback:
                     self.progress_callback(download_id, progress_data)
@@ -149,7 +150,9 @@ class SettingsDialog(QDialog):
         # Cookies browser (for auth-gated platforms like X/Twitter)
         layout.addWidget(QLabel("Cookies Browser (for X/Twitter auth):"))
         self.cookies_browser_combo = QComboBox()
-        self.cookies_browser_combo.addItems(["none", "chrome", "firefox", "safari", "edge", "brave", "chromium"])
+        self.cookies_browser_combo.addItems(
+            ["none", "chrome", "firefox", "safari", "edge", "brave", "chromium"]
+        )
         self.cookies_browser_combo.setCurrentText(self.config.get("cookies_browser", "") or "none")
         layout.addWidget(self.cookies_browser_combo)
 
@@ -173,7 +176,11 @@ class SettingsDialog(QDialog):
             "audio_quality": str(self.audio_quality_spin.value()),
             "max_concurrent_downloads": self.concurrent_spin.value(),
             "retries": self.retries_spin.value(),
-            "cookies_browser": "" if self.cookies_browser_combo.currentText() == "none" else self.cookies_browser_combo.currentText(),
+            "cookies_browser": (
+                ""
+                if self.cookies_browser_combo.currentText() == "none"
+                else self.cookies_browser_combo.currentText()
+            ),
         }
 
 
@@ -205,7 +212,9 @@ class uDownloaderApp(QMainWindow):
         self.setWindowTitle("uDownloader - Desktop")
         self.setGeometry(100, 100, 1000, 700)
 
-        logo_path = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "img", "logo.png"))
+        logo_path = os.path.abspath(
+            os.path.join(os.path.dirname(__file__), "..", "img", "logo.png")
+        )
         if os.path.exists(logo_path):
             self.setWindowIcon(QIcon(logo_path))
 
@@ -438,9 +447,7 @@ class uDownloaderApp(QMainWindow):
                 return
 
             file_state["last_percent"] = progress_value
-            message = (
-                f"[{download_label}] {file_name} | {percent} | {speed} | ETA {eta}"
-            )
+            message = f"[{download_label}] {file_name} | {percent} | {speed} | ETA {eta}"
         elif status == "finished":
             message = f"[{download_label}] Post-processing: {file_name}"
         else:
