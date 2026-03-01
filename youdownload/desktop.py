@@ -1,8 +1,13 @@
 import sys
+import os
 import asyncio
 import logging
+import re
+import time
+import threading
+from html import escape
 from datetime import datetime
-from typing import Dict, Any
+from typing import Dict, Any, Callable, Optional
 
 from PyQt6.QtWidgets import (
     QApplication,
@@ -22,15 +27,17 @@ from PyQt6.QtWidgets import (
     QSpinBox,
     QMessageBox,
     QDialogButtonBox,
+    QTextEdit,
 )
-from PyQt6.QtCore import pyqtSignal, QObject, QThread
-from PyQt6.QtGui import QFont
+from PyQt6.QtCore import pyqtSignal, QObject, QThread, Qt
+from PyQt6.QtGui import QFont, QIcon
 
 from youdownload.config import load_config, save_config
 from youdownload.history import DownloadHistory
 from youdownload.async_downloader import AsyncDownloader
 
 logger = logging.getLogger(__name__)
+ANSI_ESCAPE_RE = re.compile(r"\x1B\[[0-?]*[ -/]*[@-~]")
 
 
 class DownloadWorker(QObject):
@@ -39,16 +46,29 @@ class DownloadWorker(QObject):
     progress = pyqtSignal(str, dict)  # download_id, progress_data
     finished = pyqtSignal(str, dict)  # download_id, result
 
-    def __init__(self, async_downloader: AsyncDownloader, config: Dict[str, Any]):
+    def __init__(
+        self,
+        async_downloader: AsyncDownloader,
+        config: Dict[str, Any],
+        progress_callback: Optional[Callable[[str, Dict[str, Any]], None]] = None,
+    ):
         super().__init__()
         self.async_downloader = async_downloader
         self.config = config
+        self.progress_callback = progress_callback
         self.loop = asyncio.new_event_loop()
-        asyncio.set_event_loop(self.loop)
 
     def run_download(self, url: str, download_id: str, audio_only: bool):
         """Run a download."""
+        asyncio.set_event_loop(self.loop)
         try:
+
+            def progress_hook(progress_data: Dict[str, Any]):
+                if self.progress_callback:
+                    self.progress_callback(download_id, progress_data)
+                else:
+                    self.progress.emit(download_id, progress_data)
+
             result = self.loop.run_until_complete(
                 self.async_downloader.download_async(
                     url=url,
@@ -57,6 +77,7 @@ class DownloadWorker(QObject):
                     config=self.config,
                     download_id=download_id,
                     retries=self.config.get("retries", 3),
+                    progress_callback=progress_hook,
                 )
             )
             self.finished.emit(download_id, result)
@@ -98,6 +119,13 @@ class SettingsDialog(QDialog):
         self.quality_combo.setCurrentText(self.config.get("video_quality", "best"))
         layout.addWidget(self.quality_combo)
 
+        # Video output format
+        layout.addWidget(QLabel("Video Output Format:"))
+        self.video_format_combo = QComboBox()
+        self.video_format_combo.addItems(["mp4", "mkv", "webm", "original"])
+        self.video_format_combo.setCurrentText(self.config.get("format_preference", "mp4"))
+        layout.addWidget(self.video_format_combo)
+
         # Audio quality
         layout.addWidget(QLabel("Audio Quality (kbps):"))
         self.audio_quality_spin = QSpinBox()
@@ -119,6 +147,15 @@ class SettingsDialog(QDialog):
         self.retries_spin.setValue(self.config.get("retries", 3))
         layout.addWidget(self.retries_spin)
 
+        # Cookies browser (for auth-gated platforms like X/Twitter)
+        layout.addWidget(QLabel("Cookies Browser (for X/Twitter auth):"))
+        self.cookies_browser_combo = QComboBox()
+        self.cookies_browser_combo.addItems(
+            ["none", "chrome", "firefox", "safari", "edge", "brave", "chromium"]
+        )
+        self.cookies_browser_combo.setCurrentText(self.config.get("cookies_browser", "") or "none")
+        layout.addWidget(self.cookies_browser_combo)
+
         # Buttons
         buttons = QDialogButtonBox(
             QDialogButtonBox.StandardButton.Ok | QDialogButtonBox.StandardButton.Cancel
@@ -135,14 +172,22 @@ class SettingsDialog(QDialog):
             **self.config,
             "output_dir": self.output_input.text(),
             "video_quality": self.quality_combo.currentText(),
+            "format_preference": self.video_format_combo.currentText(),
             "audio_quality": str(self.audio_quality_spin.value()),
             "max_concurrent_downloads": self.concurrent_spin.value(),
             "retries": self.retries_spin.value(),
+            "cookies_browser": (
+                ""
+                if self.cookies_browser_combo.currentText() == "none"
+                else self.cookies_browser_combo.currentText()
+            ),
         }
 
 
 class uDownloaderApp(QMainWindow):
     """Main application window."""
+
+    progress_update = pyqtSignal(str, dict)
 
     def __init__(self):
         super().__init__()
@@ -152,13 +197,26 @@ class uDownloaderApp(QMainWindow):
             max_concurrent=self.config.get("max_concurrent_downloads", 1)
         )
         self.downloads: Dict[str, Dict] = {}  # Track active downloads
+        self.worker_threads: Dict[str, QThread] = {}
+        self.workers: Dict[str, DownloadWorker] = {}
+        self.progress_state: Dict[str, Dict[str, Any]] = {}
+        self.completed_downloads = set()
+        self.emit_state: Dict[str, Dict[str, Dict[str, Any]]] = {}
+        self.emit_state_lock = threading.Lock()
         self.init_ui()
         self.setup_logging()
+        self.progress_update.connect(self.on_download_progress, Qt.ConnectionType.QueuedConnection)
 
     def init_ui(self):
         """Initialize UI."""
         self.setWindowTitle("uDownloader - Desktop")
         self.setGeometry(100, 100, 1000, 700)
+
+        logo_path = os.path.abspath(
+            os.path.join(os.path.dirname(__file__), "..", "img", "logo.png")
+        )
+        if os.path.exists(logo_path):
+            self.setWindowIcon(QIcon(logo_path))
 
         # Central widget
         central = QWidget()
@@ -212,6 +270,12 @@ class uDownloaderApp(QMainWindow):
         self.quality_select.setCurrentText(self.config.get("video_quality", "best"))
         options_layout.addWidget(self.quality_select)
 
+        layout.addWidget(QLabel("Video Format:"))
+        self.format_select = QComboBox()
+        self.format_select.addItems(["mp4", "mkv", "webm", "original"])
+        self.format_select.setCurrentText(self.config.get("format_preference", "mp4"))
+        options_layout.addWidget(self.format_select)
+
         layout.addLayout(options_layout)
 
         # Download button
@@ -221,6 +285,19 @@ class uDownloaderApp(QMainWindow):
         )
         self.download_btn.clicked.connect(self.start_download)
         layout.addWidget(self.download_btn)
+
+        # Live download log under button
+        layout.addWidget(QLabel("Download Log:"))
+        self.download_log = QTextEdit()
+        self.download_log.setReadOnly(True)
+        self.download_log.setStyleSheet(
+            "QTextEdit { background: #0f172a; color: #e2e8f0; border: 1px solid #334155; }"
+        )
+        self.download_log.setPlaceholderText(
+            "Progress updates will appear here (percent, speed, ETA, status)..."
+        )
+        self.download_log.setMinimumHeight(180)
+        layout.addWidget(self.download_log)
 
         layout.addStretch()
         widget.setLayout(layout)
@@ -290,7 +367,7 @@ class uDownloaderApp(QMainWindow):
         layout = QVBoxLayout()
 
         self.stats_label = QLabel()
-        self.stats_label.setFont(QFont("Courier", 10))
+        self.stats_label.setFont(QFont("Courier New", 10))
         layout.addWidget(self.stats_label)
 
         self.refresh_stats_btn = QPushButton("Refresh Stats")
@@ -310,6 +387,9 @@ class uDownloaderApp(QMainWindow):
             return
 
         audio_only = self.audio_only_check.isChecked()
+        # Apply current tab selections to config for this download.
+        self.config["video_quality"] = self.quality_select.currentText()
+        self.config["format_preference"] = self.format_select.currentText()
         download_id = f"download_{len(self.downloads)}_{datetime.now().timestamp()}"
 
         # Add to queue
@@ -320,17 +400,60 @@ class uDownloaderApp(QMainWindow):
         }
 
         # Start download in thread
-        self.worker_thread = QThread()
-        self.worker = DownloadWorker(self.async_downloader, self.config)
-        self.worker.moveToThread(self.worker_thread)
-        self.worker.finished.connect(self.on_download_finished)
-        self.worker_thread.started.connect(
-            lambda: self.worker.run_download(url, download_id, audio_only)
+        worker_thread = QThread()
+        worker = DownloadWorker(
+            self.async_downloader, self.config, progress_callback=self.enqueue_progress
         )
-        self.worker_thread.start()
+        worker.moveToThread(worker_thread)
+        worker.finished.connect(self.on_download_finished)
+        worker_thread.started.connect(
+            lambda: worker.run_download(url, download_id, audio_only),
+            Qt.ConnectionType.DirectConnection,
+        )
+        self.worker_threads[download_id] = worker_thread
+        self.workers[download_id] = worker
+        worker_thread.start()
 
+        self.log_message(f"Queued [{self.short_download_id(download_id)}] {url}")
         self.url_input.clear()
         self.status_label.setText(f"Downloading... ({len(self.downloads)} active)")
+
+    def on_download_progress(self, download_id: str, progress_data: Dict[str, Any]):
+        """Handle progress updates from yt-dlp."""
+        status = progress_data.get("status", "")
+        file_name = self.format_filename(progress_data.get("filename", "file"))
+        download_label = self.short_download_id(download_id)
+
+        if status == "downloading":
+            percent = self.clean_ansi(progress_data.get("_percent_str", "").strip() or "N/A")
+            speed = self.clean_ansi(progress_data.get("_speed_str", "").strip() or "N/A")
+            eta = self.clean_ansi(progress_data.get("_eta_str", "").strip() or "N/A")
+
+            # Keep UI log concise.
+            progress_value = self.extract_percent_value(percent)
+            state = self.progress_state.setdefault(download_id, {})
+            file_state = state.setdefault(file_name, {"last_percent": None})
+            last_percent = file_state.get("last_percent")
+
+            should_log = False
+            if progress_value is None:
+                should_log = last_percent is None
+            elif last_percent is None:
+                should_log = True
+            elif progress_value == 100.0 or progress_value - last_percent >= 5.0:
+                should_log = True
+
+            if not should_log:
+                return
+
+            file_state["last_percent"] = progress_value
+            message = f"[{download_label}] {file_name} | {percent} | {speed} | ETA {eta}"
+        elif status == "finished":
+            message = f"[{download_label}] Post-processing: {file_name}"
+        else:
+            message = f"[{download_label}] Status: {status or 'unknown'}"
+
+        self.log_message(message)
 
     def on_download_finished(self, download_id: str, result: Dict[str, Any]):
         """Handle download completion."""
@@ -340,13 +463,110 @@ class uDownloaderApp(QMainWindow):
         self.history.add_download(result)
 
         # Update status
+        download_label = self.short_download_id(download_id)
         if result.get("success"):
             self.status_label.setText(f"✓ Downloaded: {result.get('title', 'Unknown')}")
+            title = result.get("title", "Unknown")
+            self.log_message(f"[{download_label}] Completed: {title}")
         else:
             self.status_label.setText(f"✗ Failed: {result.get('error', 'Unknown error')}")
+            self.log_message(f"[{download_label}] Failed: {result.get('error', 'Unknown error')}")
 
+        self.completed_downloads.add(download_id)
+        self.progress_state.pop(download_id, None)
+        with self.emit_state_lock:
+            self.emit_state.pop(download_id, None)
         self.refresh_history()
         self.refresh_stats()
+
+        # Cleanup thread resources for this download cycle
+        worker_thread = self.worker_threads.pop(download_id, None)
+        self.workers.pop(download_id, None)
+        if worker_thread:
+            worker_thread.quit()
+            worker_thread.wait()
+
+    def log_message(self, message: str):
+        """Append a timestamped, colorized message to the download log."""
+        timestamp = datetime.now().strftime("%H:%M:%S")
+        color = "#cbd5e1"  # default
+        if "Completed:" in message:
+            color = "#22c55e"
+        elif "Failed:" in message:
+            color = "#ef4444"
+        elif "Queued" in message:
+            color = "#f59e0b"
+        elif "Post-processing:" in message:
+            color = "#a78bfa"
+        elif "ETA" in message and "%" in message:
+            color = "#38bdf8"
+        elif "Status:" in message:
+            color = "#94a3b8"
+
+        safe_time = escape(f"[{timestamp}]")
+        safe_msg = escape(message)
+        html_line = (
+            f"<span style='color:#64748b; font-family: Menlo, monospace;'>{safe_time}</span> "
+            f"<span style='color:{color}; font-family: Menlo, monospace;'>{safe_msg}</span>"
+        )
+        self.download_log.append(html_line)
+
+    def enqueue_progress(self, download_id: str, progress_data: Dict[str, Any]):
+        """Forward throttled progress to the UI thread via queued Qt signal."""
+        status = progress_data.get("status", "")
+        if status == "downloading":
+            file_name = self.format_filename(progress_data.get("filename", "file"))
+            percent_text = self.clean_ansi(progress_data.get("_percent_str", "").strip() or "")
+            percent_value = self.extract_percent_value(percent_text)
+            now = time.monotonic()
+
+            with self.emit_state_lock:
+                download_state = self.emit_state.setdefault(download_id, {})
+                file_state = download_state.setdefault(
+                    file_name, {"last_percent": None, "last_emit": 0.0}
+                )
+                last_percent = file_state.get("last_percent")
+                last_emit = file_state.get("last_emit", 0.0)
+
+                should_emit = False
+                if percent_value is None:
+                    should_emit = now - last_emit >= 0.8
+                elif last_percent is None:
+                    should_emit = True
+                elif percent_value == 100.0 or percent_value - last_percent >= 5.0:
+                    should_emit = True
+                elif now - last_emit >= 1.2:
+                    should_emit = True
+
+                if not should_emit:
+                    return
+
+                file_state["last_percent"] = percent_value
+                file_state["last_emit"] = now
+
+        self.progress_update.emit(download_id, progress_data)
+
+    def short_download_id(self, download_id: str) -> str:
+        """Create a compact download label for log readability."""
+        return download_id.replace("download_", "d#")
+
+    def format_filename(self, filename: str) -> str:
+        """Return basename to avoid noisy absolute paths in logs."""
+        return os.path.basename(filename) if filename else "file"
+
+    def clean_ansi(self, text: str) -> str:
+        """Strip ANSI color codes from yt-dlp progress strings."""
+        return ANSI_ESCAPE_RE.sub("", text).strip()
+
+    def extract_percent_value(self, percent_text: str):
+        """Parse numeric percentage from yt-dlp text; return None if unavailable."""
+        match = re.search(r"(\d+(?:\.\d+)?)\s*%", percent_text)
+        if not match:
+            return None
+        try:
+            return float(match.group(1))
+        except ValueError:
+            return None
 
     def refresh_history(self):
         """Refresh history table."""
@@ -392,6 +612,8 @@ By Platform:
             self.config = dialog.get_config()
             save_config(self.config)
             self.async_downloader.max_concurrent = self.config.get("max_concurrent_downloads", 1)
+            self.quality_select.setCurrentText(self.config.get("video_quality", "best"))
+            self.format_select.setCurrentText(self.config.get("format_preference", "mp4"))
             self.status_label.setText("Settings saved")
 
     def clear_history(self):
@@ -431,6 +653,9 @@ Date: {record.get('added_at', 'N/A')[:10]}
 def main():
     """Main entry point."""
     app = QApplication(sys.argv)
+    logo_path = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "img", "logo.png"))
+    if os.path.exists(logo_path):
+        app.setWindowIcon(QIcon(logo_path))
     window = uDownloaderApp()
     window.show()
     sys.exit(app.exec())

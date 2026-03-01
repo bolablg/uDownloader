@@ -12,6 +12,8 @@ permissions:
 jobs:
   vuln_scan:
     runs-on: ubuntu-latest
+    outputs:
+      vuln_count: ${{ steps.pip_audit.outputs.vuln_count }}
     steps:
       - uses: actions/checkout@v4
 
@@ -30,43 +32,64 @@ jobs:
         id: pip_audit
         run: |
           pip-audit --format json > audit.json || true
-          echo "::set-output name=report::$(cat audit.json | jq -c .)"
+          VULN_COUNT=$(python -c "
+          import json, sys
+          try:
+              data = json.load(open('audit.json'))
+              print(len(data.get('vulnerabilities', data.get('vulns', []))))
+          except Exception:
+              print(0)
+          ")
+          echo "vuln_count=$VULN_COUNT" >> $GITHUB_OUTPUT
+
+      - name: Upload audit report
+        uses: actions/upload-artifact@v4
+        with:
+          name: pip-audit-report
+          path: audit.json
 
       - name: Run safety check
-        id: safety_check
-        run: |
-          safety check --full-report || true
+        run: safety check --full-report || true
 
   create_merge_to_main:
     needs: vuln_scan
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Create PR from `staging` → `main` (manual merge required)
+
+      - name: Download audit report
+        uses: actions/download-artifact@v4
+        with:
+          name: pip-audit-report
+
+      - name: Create PR from staging to main (manual merge required)
         uses: actions/github-script@v6
         with:
           github-token: ${{ secrets.MERGE_TOKEN }}
           script: |
             const owner = context.repo.owner;
             const repo = context.repo.repo;
-            const fs = require('fs');
+            const vulnerabilities = parseInt('${{ needs.vuln_scan.outputs.vuln_count }}') || 0;
 
-            // Read pip-audit results produced in the vuln_scan job
-            let audit = {};
-            try { audit = JSON.parse(fs.readFileSync('audit.json', 'utf8')); } catch (e) { }
-
-            const vulnerabilities = (audit.vulns && audit.vulns.length) ? audit.vulns.length : 0;
             if (vulnerabilities > 0) {
-              // Create an issue to notify maintainers of vulnerabilities
-              await github.rest.issues.create({ owner, repo, title: `Vulnerability scan failed on staging (${vulnerabilities} issues)`, body: `pip-audit found ${vulnerabilities} vulnerabilities on staging. Please review audit.json attached in the workflow artifacts.` });
-              console.log(`Found ${vulnerabilities} vulnerabilities; created issue to notify maintainers.`);
+              await github.rest.issues.create({
+                owner, repo,
+                title: `Vulnerability scan failed on staging (${vulnerabilities} issues)`,
+                body: `pip-audit found ${vulnerabilities} vulnerabilities on staging. Please review the audit report in the workflow artifacts.`
+              });
+              console.log(`Found ${vulnerabilities} vulnerabilities; created issue.`);
               return;
             }
 
-            // If no vulnerabilities, create a PR from staging to main for manual review/merge
             const { data: prs } = await github.rest.pulls.list({ owner, repo, state: 'open', head: `${owner}:staging`, base: 'main' });
             if (prs.length === 0) {
-              await github.rest.pulls.create({ owner, repo, head: 'staging', base: 'main', title: 'Staging → Main: vulnerability scan passed', body: 'Vulnerability scan passed on staging. Please review and merge manually into `main`.' });
+              await github.rest.pulls.create({
+                owner, repo,
+                head: 'staging',
+                base: 'main',
+                title: 'Staging to Main: vulnerability scan passed',
+                body: 'Vulnerability scan passed on staging. Please review and merge manually into `main`.'
+              });
               console.log('Created PR from staging to main for manual review.');
             } else {
               console.log(`PR already exists: #${prs[0].number}`);

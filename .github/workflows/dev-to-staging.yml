@@ -41,7 +41,7 @@ jobs:
   auto_merge_to_staging:
     needs: tests_and_lint
     runs-on: ubuntu-latest
-    if: always()
+    if: success()
     steps:
       - uses: actions/checkout@v4
       - name: Create or merge PR into `staging`

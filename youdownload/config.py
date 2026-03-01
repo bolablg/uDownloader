@@ -18,6 +18,7 @@ DEFAULT_CONFIG = {
     "timeout": 300,
     "retries": 3,
     "verbose": False,
+    "cookies_browser": "",  # Browser to pull cookies from for auth-gated platforms (e.g. X/Twitter)
 }
 
 

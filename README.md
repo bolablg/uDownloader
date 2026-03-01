@@ -1,5 +1,9 @@
 # uDownloader
 
+<p align="center">
+  <img src="img/logo.png" alt="uDownloader Logo" width="120"/>
+</p>
+
 [![Python 3.8+](https://img.shields.io/badge/python-3.8%2B-blue)](https://www.python.org/downloads/)
 [![Version 0.1.0](https://img.shields.io/badge/version-0.1.0-green)](./docs/CHANGELOG.md)
 [![License MIT](https://img.shields.io/badge/license-MIT-blue)](LICENSE)
@@ -26,18 +30,20 @@ A fast, powerful Python application to download YouTube videos or audio. Support
 - **Download History Tracking** - view all past downloads with statistics
 - **Live Progress Monitoring** - track active downloads in real-time
 - **Queue Management** - manage multiple downloads at once
-- **Settings Panel** - configure quality, output, retries, and concurrent limits
+- **Video Format Selection** - choose output container (mp4, mkv, webm) per download
+- **X/Twitter Support** - browser cookie injection for auth-gated content
+- **Settings Panel** - configure quality, format, output, retries, concurrent limits, and cookies
 
 ## Installation
 
 ### Option 1: Install via pip (Recommended)
 
 ```bash
-# From PyPI (when published)
+# From PyPI
 pip install udownloader
 
 # Or install from source (development mode)
-git clone <repository-url>
+git clone https://github.com/bolablg/uDownloader.git
 cd uDownloader
 pip install -e .
 ```
@@ -45,7 +51,7 @@ pip install -e .
 ### Option 2: Manual installation from source
 
 ```bash
-git clone <repository-url>
+git clone https://github.com/bolablg/uDownloader.git
 cd uDownloader
 python3 -m venv venv
 source venv/bin/activate
@@ -96,6 +102,12 @@ udownloader --url https://youtube.com/watch?v=VIDEO_ID --audio
 # Download specific quality (best, 1080p, 720p, 480p, 360p)
 udownloader --url https://youtube.com/watch?v=VIDEO_ID --quality 720p
 
+# Download in a specific container format (mp4, mkv, webm, original)
+udownloader --url https://youtube.com/watch?v=VIDEO_ID --video-format mkv
+
+# Download from X/Twitter using browser cookies for authentication
+udownloader --url https://x.com/user/status/POST_ID --cookies-browser chrome
+
 # Download entire playlist to custom location
 udownloader --url https://youtube.com/playlist?list=PLAYLIST_ID --output ~/Downloads --retries 5
 
@@ -114,11 +126,18 @@ python launcher_desktop.py
 ```
 
 **Features in Desktop App:**
-- **Download Tab**: Paste URLs and start downloads with quality selection
+
+- **Download Tab**: Paste URLs and start downloads with quality and format selection
 - **Queue Tab**: Monitor active downloads in real-time
 - **History Tab**: View all previous downloads with details
 - **Statistics Tab**: See download stats by platform and overall success rate
-- **Settings**: Configure output directory, quality, concurrent limits, and retry attempts
+- **Settings**: Configure output directory, quality, video format, concurrent limits, retry attempts, and browser cookies for X/Twitter
+
+### Screenshots
+
+![uDownloader GUI](img/uDownloader%20-%20GUI.png)
+
+![uDownloader Settings](img/uDownloader%20-%20GUI%20Settings.png)
 
 ## Configuration
 
