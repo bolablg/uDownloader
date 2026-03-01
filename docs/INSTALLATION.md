@@ -83,7 +83,7 @@ For development or custom modifications:
 
 ```bash
 # Clone repository
-git clone https://github.com/yourusername/uDownloader.git
+git clone https://github.com/bolablg/uDownloader.git
 cd uDownloader
 
 # Create virtual environment

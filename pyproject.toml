@@ -42,10 +42,10 @@ dev = [
 ]
 
 [project.urls]
-Homepage = "https://github.com/yourusername/uDownloader"
-Documentation = "https://github.com/yourusername/uDownloader#readme"
-Repository = "https://github.com/yourusername/uDownloader.git"
-Issues = "https://github.com/yourusername/uDownloader/issues"
+Homepage = "https://github.com/bolablg/uDownloader"
+Documentation = "https://github.com/bolablg/uDownloader#readme"
+Repository = "https://github.com/bolablg/uDownloader.git"
+Issues = "https://github.com/bolablg/uDownloader/issues"
 
 [project.scripts]
 udownloader = "youdownload.cli:main"
