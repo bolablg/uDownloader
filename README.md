@@ -135,7 +135,7 @@ python launcher_desktop.py
 
 ### Screenshots
 
-![uDownloader GUI](https://raw.githubusercontent.com/bolablg/uDownloader/2ce88885eacb82a4cb6681f1414978fec47759c5/img/uDownloader%20-%20GUI.png)
+![uDownloader GUI](https://raw.githubusercontent.com/bolablg/uDownloader/ba229d7d523475d16c3f617f449d50368124129d/img/uDownloader%20-%20GUI.png)
 
 ![uDownloader Settings](https://raw.githubusercontent.com/bolablg/uDownloader/2ce88885eacb82a4cb6681f1414978fec47759c5/img/uDownloader%20-%20GUI%20Settings.png)
 
