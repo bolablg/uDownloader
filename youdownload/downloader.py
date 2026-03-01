@@ -67,6 +67,10 @@ def download(
         "no_warnings": False,
     }
 
+    cookies_browser = config.get("cookies_browser", "")
+    if cookies_browser:
+        ydl_opts["cookiesfrombrowser"] = (cookies_browser,)
+
     if audio_only:
         audio_quality = config.get("audio_quality", "192")
         # convert video to mp3
@@ -84,6 +88,9 @@ def download(
         )
     else:
         video_quality = config.get("video_quality", "best")
+        video_format = str(config.get("format_preference", "mp4")).lower()
+        if video_format not in {"mp4", "mkv", "webm", "original"}:
+            video_format = "mp4"
         format_pref = {
             "best": "bestvideo+bestaudio/best",
             "1080p": "bestvideo[height<=1080]+bestaudio/best",
@@ -96,6 +103,14 @@ def download(
                 "format": format_pref.get(video_quality, "bestvideo+bestaudio/best"),
             }
         )
+        if video_format != "original":
+            ydl_opts["merge_output_format"] = video_format
+            ydl_opts["postprocessors"] = [
+                {
+                    "key": "FFmpegVideoConvertor",
+                    "preferedformat": video_format,
+                }
+            ]
 
     attempt = 0
     last_error = None
