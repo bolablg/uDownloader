@@ -1,7 +1,7 @@
 # uDownloader
 
-<p align="center">
-  <img src="https://github.com/bolablg/uDownloader/blob/main/img/logo.png" alt="uDownloader Logo" width="120"/>
+<p align="center"> 
+  <img src="https://raw.githubusercontent.com/bolablg/uDownloader/2ce88885eacb82a4cb6681f1414978fec47759c5/img/logo.png" alt="uDownloader Logo" width="120"/>
 </p>
 
 [![Python 3.8+](https://img.shields.io/badge/python-3.8%2B-blue)](https://www.python.org/downloads/)
@@ -135,9 +135,9 @@ python launcher_desktop.py
 
 ### Screenshots
 
-![uDownloader GUI](https://github.com/bolablg/uDownloader/blob/main/img/uDownloader%20-%20GUI.png)
+![uDownloader GUI](https://raw.githubusercontent.com/bolablg/uDownloader/2ce88885eacb82a4cb6681f1414978fec47759c5/img/uDownloader%20-%20GUI.png)
 
-![uDownloader Settings](https://github.com/bolablg/uDownloader/blob/main/img/uDownloader%20-%20GUI%20Settings.png)
+![uDownloader Settings](https://raw.githubusercontent.com/bolablg/uDownloader/2ce88885eacb82a4cb6681f1414978fec47759c5/img/uDownloader%20-%20GUI%20Settings.png)
 
 ## Configuration
 
