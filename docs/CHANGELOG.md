@@ -5,15 +5,53 @@ All notable changes to uDownloader will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [0.2.0] - Unreleased
+## [0.1.9] - 2026-03-08
+
+### Added
+
+- **History actions: Play & Folder** — each history row now has a Play button (opens the
+  file in the system default media player) and a Folder button (reveals the file in
+  Finder / Explorer / file manager). Works cross-platform (macOS, Windows, Linux).
+- **File path tracking** — download results now include the final `file_path` from yt-dlp,
+  persisted in history so Play/Folder buttons work across sessions.
+- **Close event cleanup** — the desktop window now properly terminates running download
+  threads on close, preventing the app from hanging.
+
+### Fixed
+
+- **Logo missing in packaged install** — moved `logo.png` into `youdownload/assets/` and
+  added it to `pyproject.toml` package-data and `MANIFEST.in` so the icon is bundled
+  when installed via pip.
+- **Test `test_load_config_with_no_file`** — the test was loading the real user config
+  from `~/.uDownloader/config.json` instead of pure defaults; fixed with `monkeypatch`.
+- **Lint: `platform` variable shadow** — renamed loop variable to avoid shadowing the
+  `platform` stdlib import.
+
+### Changed
+
+- History table replaced the non-functional "View" button with Play and Folder actions.
+- Logo path resolution now uses `youdownload/assets/logo.png` (inside the package)
+  instead of `../img/logo.png` (outside the package).
+
+---
+
+## [0.1.8] - 2026-03-08
+
+### Changed
+
+- Cleaned useless metadata from project files.
+
+---
+
+## [0.1.7] - 2026-03-01
 
 ### Added
 
 - **X/Twitter support** — browser cookie injection (`cookiesfrombrowser`) for auth-gated content;
-  selectable via `--cookies-browser` CLI flag or the Settings dialog in the GUI
-- **GUI logo** — window and dock icon sourced from `img/logo.png` (transparent PNG)
+  selectable via `--cookies-browser` CLI flag or the Settings dialog in the GUI.
+- **GUI logo** — window and dock icon sourced from `img/logo.png` (transparent PNG).
 - **Video format selector in Download tab** — choose mp4 / mkv / webm / original directly
-  from the main download form without opening Settings
+  from the main download form without opening Settings.
 
 ### Fixed
 
@@ -26,11 +64,39 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   to eliminate the 88 ms font-alias lookup warning on macOS.
 - **Window icon path** — used `os.path.abspath` to normalise the `../img/logo.png` path so
   `QIcon` receives a fully-resolved absolute path on all platforms.
+- CI publish filter fix.
 
 ### Changed
 
 - Logo PNG background made transparent (circle retained, white rectangular background removed).
 - README updated with logo, GUI screenshots, new CLI examples, and feature list.
+- Documentation and project links updated.
+
+---
+
+## [0.1.6] - 2026-03-01
+
+### Changed
+
+- README updates.
+
+---
+
+## [0.1.5] - 2026-03-01
+
+### Changed
+
+- README updates.
+
+---
+
+## [0.1.4] - 2026-03-01
+
+### Changed
+
+- Documentation updates: Sources, CI/CD status badge, contact info.
+- Minor commit-history cleanup (unused blank lines removed from launcher and core modules).
+- Tag management fix.
 
 ---
 
@@ -39,7 +105,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - Documentation updates: Sources, CI/CD status badge, contact info.
-- Minor commit-history cleanup (unused blank lines removed from launcher and core modules).
 
 ---
 

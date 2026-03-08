@@ -5,8 +5,8 @@
 </p>
 
 [![Python 3.8+](https://img.shields.io/badge/python-3.8%2B-blue)](https://www.python.org/downloads/)
-[![Version 0.1.7](https://img.shields.io/badge/version-0.1.7-green)](./docs/CHANGELOG.md)
-[![License MIT](https://img.shields.io/badge/license-MIT-blue)](LICENSE)
+[![Version 0.2.0](https://img.shields.io/badge/version-0.2.0-green)](https://github.com/bolablg/uDownloader/blob/main/docs/CHANGELOG.md)
+[![License MIT](https://img.shields.io/badge/license-MIT-blue)](https://github.com/bolablg/uDownloader/blob/main/LICENSE)
 [![GitHub CI/CD](https://github.com/bolablg/uDownloader/workflows/Tests/badge.svg)](https://github.com/bolablg/uDownloader/actions)
 
 A fast, powerful Python application to download YouTube videos or audio. Supports single videos or entire playlists with both CLI and **Desktop GUI**. Uses `yt-dlp` for efficiency and modern format handling.
@@ -191,18 +191,18 @@ You can edit this file directly to change defaults, or override with command-lin
 
 ## Documentation
 
-Comprehensive documentation is available in the [docs](docs/) folder:
+Comprehensive documentation is available in the [docs](https://github.com/bolablg/uDownloader/tree/main/docs) folder:
 
-- **[Installation Guide](docs/INSTALLATION.md)** - Platform-specific installation instructions
-- **[Quick Reference](docs/QUICK_REFERENCE.md)** - Commands, workflows, and FAQ
-- **[Contributing Guide](docs/CONTRIBUTING.md)** - Development setup and contribution guidelines
-- **[CI/CD Setup](docs/CICD_SETUP.md)** - GitHub Actions and testing infrastructure
-- **[Changelog](docs/CHANGELOG.md)** - Version history and planned features
-- **[Security Policy](docs/SECURITY.md)** - Vulnerability reporting and security practices
+- **[Installation Guide](https://github.com/bolablg/uDownloader/blob/main/docs/INSTALLATION.md)** - Platform-specific installation instructions
+- **[Quick Reference](https://github.com/bolablg/uDownloader/blob/main/docs/QUICK_REFERENCE.md)** - Commands, workflows, and FAQ
+- **[Contributing Guide](https://github.com/bolablg/uDownloader/blob/main/docs/CONTRIBUTING.md)** - Development setup and contribution guidelines
+- **[CI/CD Setup](https://github.com/bolablg/uDownloader/blob/main/docs/CICD_SETUP.md)** - GitHub Actions and testing infrastructure
+- **[Changelog](https://github.com/bolablg/uDownloader/blob/main/docs/CHANGELOG.md)** - Version history and planned features
+- **[Security Policy](https://github.com/bolablg/uDownloader/blob/main/docs/SECURITY.md)** - Vulnerability reporting and security practices
 
 ## License
 
-uDownloader is licensed under the MIT License - see [LICENSE](LICENSE) file for details.
+uDownloader is licensed under the MIT License - see [LICENSE](https://github.com/bolablg/uDownloader/blob/main/LICENSE) file for details.
 
 ---
 

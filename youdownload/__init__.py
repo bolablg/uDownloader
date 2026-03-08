@@ -13,8 +13,19 @@ Features:
     - Cross-platform support
 """
 
-__version__ = "0.1.0"
-__author__ = "Developer"
+from importlib.metadata import version as _pkg_version, PackageNotFoundError
+from pathlib import Path as _Path
+
+try:
+    __version__ = _pkg_version("uDownloader")
+except PackageNotFoundError:
+    # Fallback: read from VERSION file at project root (for dev / editable installs)
+    _version_file = _Path(__file__).resolve().parent.parent / "VERSION"
+    if _version_file.exists():
+        __version__ = _version_file.read_text().strip()
+    else:
+        __version__ = "0.0.0"
+__author__ = "Bolaji BALOGOUN"
 __license__ = "MIT"
 
 from youdownload.config import load_config, save_config  # noqa: F401
