@@ -212,9 +212,7 @@ class uDownloaderApp(QMainWindow):
         self.setWindowTitle("uDownloader - Desktop")
         self.setGeometry(100, 100, 1000, 700)
 
-        logo_path = os.path.abspath(
-            os.path.join(os.path.dirname(__file__), "..", "img", "logo.png")
-        )
+        logo_path = os.path.join(os.path.dirname(__file__), "assets", "logo.png")
         if os.path.exists(logo_path):
             self.setWindowIcon(QIcon(logo_path))
 
@@ -653,7 +651,7 @@ Date: {record.get('added_at', 'N/A')[:10]}
 def main():
     """Main entry point."""
     app = QApplication(sys.argv)
-    logo_path = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "img", "logo.png"))
+    logo_path = os.path.join(os.path.dirname(__file__), "assets", "logo.png")
     if os.path.exists(logo_path):
         app.setWindowIcon(QIcon(logo_path))
     window = uDownloaderApp()

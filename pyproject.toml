@@ -55,7 +55,7 @@ udownloader-desktop = "youdownload.desktop:main"
 packages = ["youdownload"]
 
 [tool.setuptools.package-data]
-youdownload = []
+youdownload = ["assets/*.png"]
 
 [tool.black]
 line-length = 100
