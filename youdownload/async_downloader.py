@@ -129,6 +129,17 @@ class AsyncDownloader:
                     info = ydl.extract_info(url, download=True)
                     logger.info(f"Download succeeded: {info.get('title', 'Unknown')}")
 
+                    # Resolve the final file path
+                    file_path = None
+                    requested = info.get("requested_downloads")
+                    if requested and isinstance(requested, list):
+                        file_path = requested[-1].get("filepath")
+                    if not file_path:
+                        file_path = os.path.join(
+                            platform_dir,
+                            ydl.prepare_filename(info),
+                        )
+
                     return {
                         "success": True,
                         "platform": platform,
@@ -136,6 +147,7 @@ class AsyncDownloader:
                         "url": url,
                         "timestamp": datetime.now().isoformat(),
                         "output_dir": platform_dir,
+                        "file_path": file_path,
                     }
                 except Exception as e:
                     last_error = e
