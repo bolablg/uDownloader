@@ -5,7 +5,7 @@
 </p>
 
 [![Python 3.8+](https://img.shields.io/badge/python-3.8%2B-blue)](https://www.python.org/downloads/)
-[![Version 0.1.7](https://img.shields.io/badge/version-0.1.8-green)](./docs/CHANGELOG.md)
+[![Version 0.1.9](https://img.shields.io/badge/version-0.1.9-green)](./docs/CHANGELOG.md)
 [![License MIT](https://img.shields.io/badge/license-MIT-blue)](LICENSE)
 [![GitHub CI/CD](https://github.com/bolablg/uDownloader/workflows/Tests/badge.svg)](https://github.com/bolablg/uDownloader/actions)
 
