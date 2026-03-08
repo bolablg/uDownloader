@@ -42,7 +42,8 @@ class TestConfig:
     def test_load_config_with_no_file(self, monkeypatch):
         """Test loading config returns defaults when no file exists."""
         # Prevent fallback to real user config
-        monkeypatch.setattr("youdownload.config.CONFIG_FILE", Path("/tmp/nonexistent_dir/config.json"))
+        fake_path = Path("/tmp/nonexistent_dir/config.json")
+        monkeypatch.setattr("youdownload.config.CONFIG_FILE", fake_path)
         config = load_config("/tmp/nonexistent_config_12345.json")
         assert config["output_dir"] == "uDownload"
         assert config["video_quality"] == "best"

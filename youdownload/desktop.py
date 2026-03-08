@@ -610,8 +610,8 @@ Failed:             {stats['failed']}
 
 By Platform:
 """
-        for platform, count in stats["by_platform"].items():
-            stats_text += f"  {platform}: {count}\n"
+        for plat, count in stats["by_platform"].items():
+            stats_text += f"  {plat}: {count}\n"
 
         self.stats_label.setText(stats_text)
 
