@@ -8,6 +8,7 @@ on:
       - '**/*.py'
       - 'pyproject.toml'
       - 'requirements*.txt'
+      - 'VERSION'
   workflow_dispatch: {}
 
 permissions:
@@ -44,34 +45,55 @@ jobs:
       - name: Run tests
         run: pytest -q
 
-      - name: Bump patch version
-        id: bump
+      - name: Read version from VERSION file
+        id: version
         run: |
-          CURRENT=$(python -c "
-          import re
-          with open('pyproject.toml') as f:
-              content = f.read()
-          m = re.search(r'^version\s*=\s*\"([^\"]+)\"', content, re.MULTILINE)
-          print(m.group(1))
-          ")
-          NEW=$(python -c "
-          parts = '$CURRENT'.split('.')
-          parts[-1] = str(int(parts[-1]) + 1)
-          print('.'.join(parts))
-          ")
-          sed -i "s/^version = \"$CURRENT\"/version = \"$NEW\"/" pyproject.toml
-          echo "new_version=$NEW" >> $GITHUB_OUTPUT
-          echo "tag=v$NEW" >> $GITHUB_OUTPUT
+          VERSION=$(tr -d '[:space:]' < VERSION)
+          echo "version=${VERSION}" >> "$GITHUB_OUTPUT"
+          echo "tag=v${VERSION}" >> "$GITHUB_OUTPUT"
 
-      - name: Commit and tag version bump
+      - name: Sync version to README and CHANGELOG
+        env:
+          VERSION: ${{ steps.version.outputs.version }}
+        run: |
+          python -c "
+          import re, os
+          ver = os.environ['VERSION']
+
+          # Update README badge
+          with open('README.md', 'r') as f:
+              content = f.read()
+          content = re.sub(r'version-[0-9]+\.[0-9]+\.[0-9]+-', f'version-{ver}-', content)
+          with open('README.md', 'w') as f:
+              f.write(content)
+
+          # Update CHANGELOG unreleased header
+          with open('docs/CHANGELOG.md', 'r') as f:
+              content = f.read()
+          content = re.sub(
+              r'## \[Unreleased\]',
+              f'## [{ver}]',
+              content,
+              count=1,
+          )
+          with open('docs/CHANGELOG.md', 'w') as f:
+              f.write(content)
+          "
+
+      - name: Commit version sync and tag
+        env:
+          VERSION: ${{ steps.version.outputs.version }}
+          TAG: ${{ steps.version.outputs.tag }}
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add pyproject.toml
-          git commit -m "chore: bump version to ${{ steps.bump.outputs.new_version }} [skip ci]"
-          git tag ${{ steps.bump.outputs.tag }}
+          git diff --quiet || {
+            git add README.md docs/CHANGELOG.md
+            git commit -m "chore: sync version to ${VERSION} [skip ci]"
+          }
+          git tag -f "${TAG}"
           git push origin HEAD:refs/heads/main
-          git push origin ${{ steps.bump.outputs.tag }}
+          git push origin "${TAG}" --force
 
       - name: Build distribution
         run: python -m build
@@ -86,6 +108,6 @@ jobs:
       - name: Create GitHub Release
         uses: ncipollo/release-action@v1
         with:
-          tag: ${{ steps.bump.outputs.tag }}
-          name: "Release ${{ steps.bump.outputs.new_version }}"
+          tag: ${{ steps.version.outputs.tag }}
+          name: "Release ${{ steps.version.outputs.version }}"
           generateReleaseNotes: true

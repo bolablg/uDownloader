@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "uDownloader"
-version = "0.1.9"
+dynamic = ["version"]
 description = "Fast, async YouTube/Instagram/TikTok downloader with desktop GUI and CLI"
 readme = "README.md"
 requires-python = ">=3.8"
@@ -50,6 +50,9 @@ Issues = "https://github.com/bolablg/uDownloader/issues"
 [project.scripts]
 udownloader = "youdownload.cli:main"
 udownloader-desktop = "youdownload.desktop:main"
+
+[tool.setuptools.dynamic]
+version = {file = "VERSION"}
 
 [tool.setuptools]
 packages = ["youdownload"]
