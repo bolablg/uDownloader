@@ -1,5 +1,7 @@
 import sys
 import os
+import subprocess
+import platform
 import asyncio
 import logging
 import re
@@ -344,15 +346,16 @@ class uDownloaderApp(QMainWindow):
 
         # History table
         self.history_table = QTableWidget()
-        self.history_table.setColumnCount(5)
+        self.history_table.setColumnCount(6)
         self.history_table.setHorizontalHeaderLabels(
-            ["Title", "Platform", "Status", "Date", "View"]
+            ["Title", "Platform", "Status", "Date", "Play", "Folder"]
         )
-        self.history_table.setColumnWidth(0, 300)
+        self.history_table.setColumnWidth(0, 250)
         self.history_table.setColumnWidth(1, 100)
-        self.history_table.setColumnWidth(2, 80)
-        self.history_table.setColumnWidth(3, 150)
-        self.history_table.setColumnWidth(4, 80)
+        self.history_table.setColumnWidth(2, 60)
+        self.history_table.setColumnWidth(3, 120)
+        self.history_table.setColumnWidth(4, 60)
+        self.history_table.setColumnWidth(5, 60)
         layout.addWidget(self.history_table)
 
         self.refresh_history()
@@ -581,9 +584,18 @@ class uDownloaderApp(QMainWindow):
             date_str = record.get("added_at", "")[:10]
             self.history_table.setItem(i, 3, QTableWidgetItem(date_str))
 
-            view_btn = QPushButton("View")
-            view_btn.clicked.connect(lambda checked, r=record: self.view_download_info(r))
-            self.history_table.setCellWidget(i, 4, view_btn)
+            file_path = record.get("file_path", "")
+            has_file = bool(file_path) and os.path.exists(file_path)
+
+            play_btn = QPushButton("Play")
+            play_btn.setEnabled(has_file and record.get("success", False))
+            play_btn.clicked.connect(lambda checked, p=file_path: self.play_file(p))
+            self.history_table.setCellWidget(i, 4, play_btn)
+
+            folder_btn = QPushButton("Folder")
+            folder_btn.setEnabled(has_file and record.get("success", False))
+            folder_btn.clicked.connect(lambda checked, p=file_path: self.show_in_folder(p))
+            self.history_table.setCellWidget(i, 5, folder_btn)
 
     def refresh_stats(self):
         """Refresh statistics."""
@@ -627,18 +639,42 @@ By Platform:
             self.refresh_history()
             self.refresh_stats()
 
-    def view_download_info(self, record: Dict[str, Any]):
-        """View detailed download information."""
-        info = f"""
-Title: {record.get('title', 'Unknown')}
-Platform: {record.get('platform', 'Unknown')}
-URL: {record.get('url', 'N/A')}
-Status: {'Success' if record.get('success') else 'Failed'}
-Date: {record.get('added_at', 'N/A')[:10]}
+    def play_file(self, file_path: str):
+        """Open the downloaded file with the system default player."""
+        if not file_path or not os.path.exists(file_path):
+            QMessageBox.warning(self, "File Not Found", "The downloaded file could not be found.")
+            return
+        try:
+            if platform.system() == "Darwin":
+                subprocess.Popen(["open", file_path])
+            elif platform.system() == "Windows":
+                os.startfile(file_path)
+            else:
+                subprocess.Popen(["xdg-open", file_path])
+        except Exception as e:
+            QMessageBox.warning(self, "Error", f"Could not open file: {e}")
 
-{f"Error: {record.get('error', '')}" if not record.get('success') else ""}
-"""
-        QMessageBox.information(self, "Download Info", info)
+    def show_in_folder(self, file_path: str):
+        """Reveal the downloaded file in the system file manager."""
+        if not file_path or not os.path.exists(file_path):
+            QMessageBox.warning(self, "File Not Found", "The downloaded file could not be found.")
+            return
+        try:
+            if platform.system() == "Darwin":
+                subprocess.Popen(["open", "-R", file_path])
+            elif platform.system() == "Windows":
+                subprocess.Popen(["explorer", "/select,", file_path])
+            else:
+                subprocess.Popen(["xdg-open", os.path.dirname(file_path)])
+        except Exception as e:
+            QMessageBox.warning(self, "Error", f"Could not open folder: {e}")
+
+    def closeEvent(self, event):
+        """Clean up running threads before closing."""
+        for thread in self.worker_threads.values():
+            thread.quit()
+            thread.wait(2000)
+        event.accept()
 
     def setup_logging(self):
         """Setup logging."""
