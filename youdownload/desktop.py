@@ -687,6 +687,7 @@ By Platform:
 def main():
     """Main entry point."""
     app = QApplication(sys.argv)
+    app.setApplicationName("uDownloader")
     logo_path = os.path.join(os.path.dirname(__file__), "assets", "logo.png")
     if os.path.exists(logo_path):
         app.setWindowIcon(QIcon(logo_path))
