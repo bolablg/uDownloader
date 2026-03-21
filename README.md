@@ -213,4 +213,4 @@ uDownloader is licensed under the MIT License - see [LICENSE](https://github.com
 
 ---
 
-**Made with ❤️ with CodeX 5.3 for video downloaders everywhere**
+**Made with ❤️ for video downloaders everywhere**
