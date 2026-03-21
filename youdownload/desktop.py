@@ -684,9 +684,61 @@ By Platform:
         )
 
 
+def _ensure_macos_app_bundle():
+    """Create a minimal .app bundle on macOS and relaunch through it."""
+    import shutil
+    import plistlib
+
+    app_dir = os.path.join(os.path.dirname(__file__), "macos", "uDownloader.app")
+    contents_dir = os.path.join(app_dir, "Contents")
+    macos_dir = os.path.join(contents_dir, "MacOS")
+    resources_dir = os.path.join(contents_dir, "Resources")
+
+    launcher = os.path.join(macos_dir, "uDownloader")
+    logo_src = os.path.join(os.path.dirname(__file__), "assets", "logo.png")
+    logo_dst = os.path.join(resources_dir, "logo.png")
+
+    if not os.path.isfile(launcher):
+        os.makedirs(macos_dir, exist_ok=True)
+        os.makedirs(resources_dir, exist_ok=True)
+
+        with open(launcher, "w") as f:
+            f.write("#!/bin/bash\n")
+            f.write('exec python3 -m youdownload.desktop --launched-from-app "$@"\n')
+        os.chmod(launcher, 0o755)
+
+        plist = {
+            "CFBundleName": "uDownloader",
+            "CFBundleDisplayName": "uDownloader",
+            "CFBundleIdentifier": "com.bolablg.udownloader",
+            "CFBundleExecutable": "uDownloader",
+            "CFBundlePackageType": "APPL",
+            "CFBundleVersion": "1.0",
+            "CFBundleShortVersionString": "1.0",
+            "LSMinimumSystemVersion": "10.15",
+        }
+        if os.path.isfile(logo_src):
+            shutil.copy2(logo_src, logo_dst)
+            plist["CFBundleIconFile"] = "logo.png"
+
+        with open(os.path.join(contents_dir, "Info.plist"), "wb") as f:
+            plistlib.dump(plist, f)
+
+    return app_dir
+
+
 def main():
     """Main entry point."""
-    app = QApplication(sys.argv)
+    if sys.platform == "darwin" and "--launched-from-app" not in sys.argv:
+        try:
+            app_dir = _ensure_macos_app_bundle()
+            subprocess.Popen(["open", "-a", app_dir])
+            sys.exit(0)
+        except Exception:
+            pass
+
+    argv = [a for a in sys.argv if a != "--launched-from-app"]
+    app = QApplication(argv)
     app.setApplicationName("uDownloader")
     logo_path = os.path.join(os.path.dirname(__file__), "assets", "logo.png")
     if os.path.exists(logo_path):

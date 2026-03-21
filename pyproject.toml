@@ -59,7 +59,7 @@ version = {file = "VERSION"}
 packages = ["youdownload"]
 
 [tool.setuptools.package-data]
-youdownload = ["assets/*.png"]
+youdownload = ["assets/*.png", "macos/**/*"]
 
 [tool.black]
 line-length = 100
