@@ -684,8 +684,27 @@ By Platform:
         )
 
 
-def _ensure_macos_app_bundle():
-    """Create a minimal .app bundle on macOS and relaunch through it."""
+def _install_desktop_shortcut():
+    """Install a desktop shortcut/app entry on first launch."""
+    logo_src = os.path.join(os.path.dirname(__file__), "assets", "logo.png")
+    marker = os.path.join(os.path.dirname(__file__), ".shortcut_installed")
+
+    if os.path.isfile(marker):
+        return
+
+    if sys.platform == "darwin":
+        _install_macos_app(logo_src)
+    elif sys.platform == "linux":
+        _install_linux_desktop(logo_src)
+    elif sys.platform == "win32":
+        _install_windows_shortcut(logo_src)
+
+    with open(marker, "w") as f:
+        f.write("installed")
+
+
+def _install_macos_app(logo_src):
+    """Create and install .app bundle to /Applications."""
     import shutil
     import plistlib
 
@@ -693,49 +712,124 @@ def _ensure_macos_app_bundle():
     contents_dir = os.path.join(app_dir, "Contents")
     macos_dir = os.path.join(contents_dir, "MacOS")
     resources_dir = os.path.join(contents_dir, "Resources")
-
     launcher = os.path.join(macos_dir, "uDownloader")
-    logo_src = os.path.join(os.path.dirname(__file__), "assets", "logo.png")
-    logo_dst = os.path.join(resources_dir, "logo.png")
 
-    if not os.path.isfile(launcher):
-        os.makedirs(macos_dir, exist_ok=True)
-        os.makedirs(resources_dir, exist_ok=True)
+    os.makedirs(macos_dir, exist_ok=True)
+    os.makedirs(resources_dir, exist_ok=True)
 
-        with open(launcher, "w") as f:
-            f.write("#!/bin/bash\n")
-            f.write('exec python3 -m youdownload.desktop --launched-from-app "$@"\n')
-        os.chmod(launcher, 0o755)
+    with open(launcher, "w") as f:
+        f.write("#!/bin/bash\n")
+        f.write('exec python3 -m youdownload.desktop --launched-from-app "$@"\n')
+    os.chmod(launcher, 0o755)
 
-        plist = {
-            "CFBundleName": "uDownloader",
-            "CFBundleDisplayName": "uDownloader",
-            "CFBundleIdentifier": "com.bolablg.udownloader",
-            "CFBundleExecutable": "uDownloader",
-            "CFBundlePackageType": "APPL",
-            "CFBundleVersion": "1.0",
-            "CFBundleShortVersionString": "1.0",
-            "LSMinimumSystemVersion": "10.15",
-        }
-        if os.path.isfile(logo_src):
-            shutil.copy2(logo_src, logo_dst)
-            plist["CFBundleIconFile"] = "logo.png"
+    plist = {
+        "CFBundleName": "uDownloader",
+        "CFBundleDisplayName": "uDownloader",
+        "CFBundleIdentifier": "com.bolablg.udownloader",
+        "CFBundleExecutable": "uDownloader",
+        "CFBundlePackageType": "APPL",
+        "CFBundleVersion": "1.0",
+        "CFBundleShortVersionString": "1.0",
+        "LSMinimumSystemVersion": "10.15",
+    }
+    if os.path.isfile(logo_src):
+        shutil.copy2(logo_src, os.path.join(resources_dir, "logo.png"))
+        plist["CFBundleIconFile"] = "logo.png"
 
-        with open(os.path.join(contents_dir, "Info.plist"), "wb") as f:
-            plistlib.dump(plist, f)
+    with open(os.path.join(contents_dir, "Info.plist"), "wb") as f:
+        plistlib.dump(plist, f)
 
-    return app_dir
+    # Copy to /Applications so it appears in Launchpad/Spotlight
+    apps_dest = os.path.expanduser("/Applications/uDownloader.app")
+    try:
+        if os.path.exists(apps_dest):
+            shutil.rmtree(apps_dest)
+        shutil.copytree(app_dir, apps_dest)
+    except PermissionError:
+        pass
+
+
+def _install_linux_desktop(logo_src):
+    """Create a .desktop entry for Linux application menus."""
+    import shutil
+
+    apps_dir = os.path.expanduser("~/.local/share/applications")
+    icons_dir = os.path.expanduser("~/.local/share/icons")
+    os.makedirs(apps_dir, exist_ok=True)
+    os.makedirs(icons_dir, exist_ok=True)
+
+    icon_dst = os.path.join(icons_dir, "udownloader.png")
+    if os.path.isfile(logo_src):
+        shutil.copy2(logo_src, icon_dst)
+
+    desktop_entry = (
+        "[Desktop Entry]\n"
+        "Name=uDownloader\n"
+        "Comment=Fast video downloader with desktop GUI\n"
+        f"Exec=udownloader-desktop\n"
+        f"Icon={icon_dst}\n"
+        "Terminal=false\n"
+        "Type=Application\n"
+        "Categories=Network;AudioVideo;Utility;\n"
+    )
+    desktop_file = os.path.join(apps_dir, "udownloader.desktop")
+    with open(desktop_file, "w") as f:
+        f.write(desktop_entry)
+    os.chmod(desktop_file, 0o755)
+
+
+def _install_windows_shortcut(logo_src):  # noqa: ARG001
+    """Create a Start Menu shortcut on Windows."""
+    import shutil as _shutil
+
+    try:
+        import winreg
+
+        shell_folder_key = winreg.OpenKey(
+            winreg.HKEY_CURRENT_USER,
+            r"Software\Microsoft\Windows\CurrentVersion\Explorer\Shell Folders",
+        )
+        start_menu = winreg.QueryValueEx(shell_folder_key, "Programs")[0]
+        winreg.CloseKey(shell_folder_key)
+    except Exception:
+        start_menu = os.path.join(
+            os.environ.get("APPDATA", ""), "Microsoft", "Windows", "Start Menu", "Programs"
+        )
+
+    if not os.path.isdir(start_menu):
+        return
+
+    # Use PowerShell to create a .lnk shortcut
+    shortcut_path = os.path.join(start_menu, "uDownloader.lnk")
+    target = _shutil.which("udownloader-desktop") or "udownloader-desktop"
+
+    ps_script = (
+        f"$ws = New-Object -ComObject WScript.Shell; "
+        f'$s = $ws.CreateShortcut("{shortcut_path}"); '
+        f'$s.TargetPath = "{target}"; '
+        f'$s.WorkingDirectory = "%USERPROFILE%"; '
+        f'$s.Description = "uDownloader"; '
+        f"$s.Save()"
+    )
+    subprocess.run(
+        ["powershell", "-Command", ps_script],
+        capture_output=True,
+    )
 
 
 def main():
     """Main entry point."""
+    # On macOS, relaunch through .app bundle for proper Dock name
     if sys.platform == "darwin" and "--launched-from-app" not in sys.argv:
         try:
-            app_dir = _ensure_macos_app_bundle()
+            _install_desktop_shortcut()
+            app_dir = os.path.join(os.path.dirname(__file__), "macos", "uDownloader.app")
             subprocess.Popen(["open", "-a", app_dir])
             sys.exit(0)
         except Exception:
             pass
+    else:
+        _install_desktop_shortcut()
 
     argv = [a for a in sys.argv if a != "--launched-from-app"]
     app = QApplication(argv)

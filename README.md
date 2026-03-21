@@ -125,6 +125,13 @@ udownloader-desktop
 python launcher_desktop.py
 ```
 
+On first launch, uDownloader automatically registers itself as a native desktop application:
+- **macOS**: Installs to `/Applications` — available in Launchpad and Spotlight
+- **Linux**: Creates a `.desktop` entry — appears in your application menu
+- **Windows**: Adds a Start Menu shortcut
+
+After the first launch, you can open uDownloader directly from your OS like any other app.
+
 **Features in Desktop App:**
 
 - **Download Tab**: Paste URLs and start downloads with quality and format selection
