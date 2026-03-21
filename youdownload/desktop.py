@@ -717,9 +717,10 @@ def _install_macos_app(logo_src):
     os.makedirs(macos_dir, exist_ok=True)
     os.makedirs(resources_dir, exist_ok=True)
 
+    python_path = sys.executable
     with open(launcher, "w") as f:
         f.write("#!/bin/bash\n")
-        f.write('exec python3 -m youdownload.desktop --launched-from-app "$@"\n')
+        f.write(f'exec "{python_path}" -m youdownload.desktop --launched-from-app "$@"\n')
     os.chmod(launcher, 0o755)
 
     plist = {
