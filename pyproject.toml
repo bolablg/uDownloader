@@ -59,7 +59,7 @@ version = {file = "VERSION"}
 packages = ["youdownload"]
 
 [tool.setuptools.package-data]
-youdownload = ["assets/*.png", "macos/**/*"]
+youdownload = ["assets/*.png", "macos/**/*", ".shortcut_installed"]
 
 [tool.black]
 line-length = 100
