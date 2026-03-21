@@ -32,7 +32,7 @@ from PyQt6.QtWidgets import (
     QTextEdit,
 )
 from PyQt6.QtCore import pyqtSignal, QObject, QThread, Qt
-from PyQt6.QtGui import QFont, QIcon
+from PyQt6.QtGui import QAction, QIcon
 
 from youdownload.config import load_config, save_config
 from youdownload.history import DownloadHistory
@@ -252,39 +252,46 @@ class uDownloaderApp(QMainWindow):
         widget = QWidget()
         layout = QVBoxLayout()
 
-        # URL input
-        layout.addWidget(QLabel("YouTube/Instagram/TikTok URL:"))
+        # URL input + Download button
+        url_layout = QHBoxLayout()
         self.url_input = QLineEdit()
         self.url_input.setPlaceholderText("Paste URL here...")
-        layout.addWidget(self.url_input)
+        url_layout.addWidget(self.url_input)
+        self.download_btn = QPushButton("Download")
+        self.download_btn.setStyleSheet(
+            "QPushButton { background-color: #4CAF50; color: white; font-weight: bold;"
+            " padding: 8px 20px; border-radius: 6px; border: none; }"
+            "QPushButton:hover { background-color: #45a049; }"
+            "QPushButton:pressed { background-color: #3d8b40; }"
+        )
+        self.download_btn.clicked.connect(self.start_download)
+        url_layout.addWidget(self.download_btn)
+        layout.addLayout(url_layout)
 
         # Options
         options_layout = QHBoxLayout()
+        options_layout.setSpacing(6)
 
         self.audio_only_check = QCheckBox("Audio Only (MP3)")
         options_layout.addWidget(self.audio_only_check)
 
-        layout.addWidget(QLabel("Video Quality:"))
+        options_layout.addStretch()
+
+        options_layout.addWidget(QLabel("Quality:"))
         self.quality_select = QComboBox()
         self.quality_select.addItems(["best", "1080p", "720p", "480p", "360p"])
         self.quality_select.setCurrentText(self.config.get("video_quality", "best"))
         options_layout.addWidget(self.quality_select)
 
-        layout.addWidget(QLabel("Video Format:"))
+        options_layout.addSpacing(12)
+
+        options_layout.addWidget(QLabel("Format:"))
         self.format_select = QComboBox()
         self.format_select.addItems(["mp4", "mkv", "webm", "original"])
         self.format_select.setCurrentText(self.config.get("format_preference", "mp4"))
         options_layout.addWidget(self.format_select)
 
         layout.addLayout(options_layout)
-
-        # Download button
-        self.download_btn = QPushButton("Download")
-        self.download_btn.setStyleSheet(
-            "background-color: #4CAF50; color: white; font-weight: bold; padding: 10px;"
-        )
-        self.download_btn.clicked.connect(self.start_download)
-        layout.addWidget(self.download_btn)
 
         # Live download log under button
         layout.addWidget(QLabel("Download Log:"))
@@ -363,22 +370,127 @@ class uDownloaderApp(QMainWindow):
         return widget
 
     def create_stats_tab(self) -> QWidget:
-        """Create statistics tab."""
+        """Create statistics tab with modern dashboard."""
         widget = QWidget()
         layout = QVBoxLayout()
+        layout.setSpacing(16)
+        layout.setContentsMargins(16, 16, 16, 16)
 
-        self.stats_label = QLabel()
-        self.stats_label.setFont(QFont("Courier New", 10))
-        layout.addWidget(self.stats_label)
+        # -- Top metric cards row --
+        cards_layout = QHBoxLayout()
+        cards_layout.setSpacing(12)
 
+        self._card_total = self._make_stat_card("Total Downloads", "0", "#3b82f6")
+        self._card_success = self._make_stat_card("Successful", "0", "#22c55e")
+        self._card_failed = self._make_stat_card("Failed", "0", "#ef4444")
+        self._card_rate = self._make_stat_card("Success Rate", "0%", "#a855f7")
+
+        cards_layout.addWidget(self._card_total)
+        cards_layout.addWidget(self._card_success)
+        cards_layout.addWidget(self._card_failed)
+        cards_layout.addWidget(self._card_rate)
+        layout.addLayout(cards_layout)
+
+        # -- Platform breakdown --
+        platform_frame = QWidget()
+        platform_frame.setStyleSheet(
+            "QWidget#platformFrame { background: #1e293b; border-radius: 10px; }"
+        )
+        platform_frame.setObjectName("platformFrame")
+        platform_layout = QVBoxLayout(platform_frame)
+        platform_layout.setContentsMargins(16, 12, 16, 12)
+
+        platform_header = QLabel("Downloads by Platform")
+        platform_header.setStyleSheet("color: #94a3b8; font-size: 13px; font-weight: bold;")
+        platform_layout.addWidget(platform_header)
+
+        self._platform_bars_layout = QVBoxLayout()
+        self._platform_bars_layout.setSpacing(8)
+        platform_layout.addLayout(self._platform_bars_layout)
+        platform_layout.addStretch()
+
+        layout.addWidget(platform_frame)
+
+        # -- Refresh button --
         self.refresh_stats_btn = QPushButton("Refresh Stats")
+        self.refresh_stats_btn.setStyleSheet(
+            "QPushButton { background: #334155; color: #e2e8f0; border-radius: 6px;"
+            " padding: 8px; font-weight: bold; border: 1px solid #475569; }"
+            "QPushButton:hover { background: #475569; }"
+        )
         self.refresh_stats_btn.clicked.connect(self.refresh_stats)
         layout.addWidget(self.refresh_stats_btn)
 
-        layout.addStretch()
         self.refresh_stats()
         widget.setLayout(layout)
         return widget
+
+    def _make_stat_card(self, title: str, value: str, accent: str) -> QWidget:
+        """Create a single metric card widget."""
+        card = QWidget()
+        card.setObjectName("statCard")
+        card.setStyleSheet("QWidget#statCard { background: #1e293b; border-radius: 10px; }")
+        card_layout = QVBoxLayout(card)
+        card_layout.setContentsMargins(14, 12, 14, 12)
+        card_layout.setSpacing(4)
+
+        title_label = QLabel(title)
+        title_label.setStyleSheet("color: #94a3b8; font-size: 11px;")
+        card_layout.addWidget(title_label)
+
+        value_label = QLabel(value)
+        value_label.setObjectName("cardValue")
+        value_label.setStyleSheet(f"color: {accent}; font-size: 28px; font-weight: bold;")
+        card_layout.addWidget(value_label)
+
+        return card
+
+    def _make_platform_bar(self, name: str, count: int, max_count: int) -> QWidget:
+        """Create a single platform bar row."""
+        row = QWidget()
+        row_layout = QHBoxLayout(row)
+        row_layout.setContentsMargins(0, 0, 0, 0)
+        row_layout.setSpacing(10)
+
+        platform_colors = {
+            "YouTube": "#ff0000",
+            "Instagram": "#e1306c",
+            "TikTok": "#00f2ea",
+            "Twitter": "#1da1f2",
+            "Facebook": "#1877f2",
+        }
+        color = platform_colors.get(name, "#64748b")
+
+        label = QLabel(name)
+        label.setFixedWidth(80)
+        label.setStyleSheet("color: #e2e8f0; font-size: 12px;")
+        row_layout.addWidget(label)
+
+        bar_bg = QWidget()
+        bar_bg.setFixedHeight(20)
+        bar_bg.setStyleSheet("background: #0f172a; border-radius: 4px;")
+        bar_layout = QHBoxLayout(bar_bg)
+        bar_layout.setContentsMargins(0, 0, 0, 0)
+        bar_layout.setSpacing(0)
+
+        ratio = count / max_count if max_count > 0 else 0
+        bar_fill = QWidget()
+        bar_fill.setFixedHeight(20)
+        bar_fill.setStyleSheet(f"background: {color}; border-radius: 4px; min-width: 4px;")
+        bar_layout.addWidget(bar_fill, stretch=max(int(ratio * 100), 1))
+        bar_spacer = QWidget()
+        bar_spacer.setStyleSheet("background: transparent;")
+        bar_layout.addWidget(bar_spacer, stretch=max(100 - int(ratio * 100), 1))
+
+        row_layout.addWidget(bar_bg, stretch=1)
+
+        count_label = QLabel(str(count))
+        count_label.setFixedWidth(30)
+        count_label.setAlignment(Qt.AlignmentFlag.AlignRight)
+        count_label.setStyleSheet(f"color: {color}; font-size: 12px; font-weight: bold;")
+        row_layout.addWidget(count_label)
+
+        return row
 
     def start_download(self):
         """Start a download."""
@@ -598,22 +710,30 @@ class uDownloaderApp(QMainWindow):
             self.history_table.setCellWidget(i, 5, folder_btn)
 
     def refresh_stats(self):
-        """Refresh statistics."""
+        """Refresh statistics dashboard."""
         stats = self.history.get_stats()
+        total = stats["total_downloads"]
+        successful = stats["successful"]
+        failed = stats["failed"]
+        rate = f"{(successful / total * 100):.0f}%" if total > 0 else "N/A"
 
-        stats_text = f"""
-Download Statistics:
+        # Update metric cards
+        self._card_total.findChild(QLabel, "cardValue").setText(str(total))
+        self._card_success.findChild(QLabel, "cardValue").setText(str(successful))
+        self._card_failed.findChild(QLabel, "cardValue").setText(str(failed))
+        self._card_rate.findChild(QLabel, "cardValue").setText(rate)
 
-Total Downloads:    {stats['total_downloads']}
-Successful:         {stats['successful']}
-Failed:             {stats['failed']}
+        # Update platform bars
+        while self._platform_bars_layout.count():
+            item = self._platform_bars_layout.takeAt(0)
+            if item.widget():
+                item.widget().deleteLater()
 
-By Platform:
-"""
-        for plat, count in stats["by_platform"].items():
-            stats_text += f"  {plat}: {count}\n"
-
-        self.stats_label.setText(stats_text)
+        platforms = stats["by_platform"]
+        max_count = max(platforms.values()) if platforms else 1
+        for name, count in sorted(platforms.items(), key=lambda x: x[1], reverse=True):
+            bar = self._make_platform_bar(name, count, max_count)
+            self._platform_bars_layout.addWidget(bar)
 
     def open_settings(self):
         """Open settings dialog."""
@@ -718,9 +838,11 @@ def _install_macos_app(logo_src):
     os.makedirs(resources_dir, exist_ok=True)
 
     python_path = sys.executable
+    package_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
     with open(launcher, "w") as f:
         f.write("#!/bin/bash\n")
-        f.write(f'exec "{python_path}" -m youdownload.desktop --launched-from-app "$@"\n')
+        f.write(f'export PYTHONPATH="{package_dir}:$PYTHONPATH"\n')
+        f.write(f'exec "{python_path}" -m youdownload.desktop "$@"\n')
     os.chmod(launcher, 0o755)
 
     plist = {
@@ -820,25 +942,36 @@ def _install_windows_shortcut(logo_src):  # noqa: ARG001
 
 def main():
     """Main entry point."""
-    # On macOS, relaunch through .app bundle for proper Dock name
-    if sys.platform == "darwin" and "--launched-from-app" not in sys.argv:
-        try:
-            _install_desktop_shortcut()
-            app_dir = os.path.join(os.path.dirname(__file__), "macos", "uDownloader.app")
-            subprocess.Popen(["open", "-a", app_dir])
-            sys.exit(0)
-        except Exception:
-            pass
-    else:
-        _install_desktop_shortcut()
+    _install_desktop_shortcut()
 
-    argv = [a for a in sys.argv if a != "--launched-from-app"]
-    app = QApplication(argv)
+    # On macOS, patch NSBundle so the native menu and Dock show "uDownloader"
+    if sys.platform == "darwin":
+        try:
+            from Foundation import NSBundle
+
+            bundle = NSBundle.mainBundle()
+            info = bundle.infoDictionary()
+            info["CFBundleName"] = "uDownloader"
+        except ImportError:
+            pass
+
+    app = QApplication(["uDownloader"] + sys.argv[1:])
     app.setApplicationName("uDownloader")
     logo_path = os.path.join(os.path.dirname(__file__), "assets", "logo.png")
     if os.path.exists(logo_path):
         app.setWindowIcon(QIcon(logo_path))
+
     window = uDownloaderApp()
+
+    # On macOS, add "Settings..." to the native application menu
+    if sys.platform == "darwin":
+        menu = window.menuBar().addMenu("uDownloader")
+        settings_action = QAction("Settings…", window)
+        settings_action.setMenuRole(QAction.MenuRole.PreferencesRole)
+        settings_action.setShortcut("Ctrl+,")
+        settings_action.triggered.connect(window.open_settings)
+        menu.addAction(settings_action)
+
     window.show()
     sys.exit(app.exec())
 
