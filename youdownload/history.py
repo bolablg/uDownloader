@@ -100,14 +100,27 @@ class DownloadHistory:
 
         return history
 
-    def get_stats(self) -> Dict[str, Any]:
+    def get_stats(
+        self,
+        date_from: Optional[str] = None,
+        date_to: Optional[str] = None,
+    ) -> Dict[str, Any]:
         """
-        Get download statistics.
+        Get download statistics with optional date filtering.
+
+        Args:
+            date_from: Start date (ISO format YYYY-MM-DD), inclusive
+            date_to: End date (ISO format YYYY-MM-DD), inclusive
 
         Returns:
             Dictionary with statistics
         """
         history = self._load_history()
+
+        if date_from:
+            history = [h for h in history if h.get("added_at", "")[:10] >= date_from]
+        if date_to:
+            history = [h for h in history if h.get("added_at", "")[:10] <= date_to]
 
         total = len(history)
         successful = sum(1 for h in history if h.get("success", False))

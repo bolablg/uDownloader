@@ -145,3 +145,7 @@ downloads/
 
 # Python bytecode files (redundant with earlier rules but included for clarity)
 *.pyc
+
+# Generated macOS .app bundle and shortcut marker
+youdownload/macos/
+youdownload/.shortcut_installed

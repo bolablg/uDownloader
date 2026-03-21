@@ -29,6 +29,7 @@ classifiers = [
 dependencies = [
     "yt-dlp>=2024.8.2",
     "PyQt6>=6.6.0",
+    "pyobjc-framework-Cocoa>=9.0; sys_platform == 'darwin'",
 ]
 
 [project.optional-dependencies]
