@@ -4,7 +4,7 @@
   <img src="https://raw.githubusercontent.com/bolablg/uDownloader/2ce88885eacb82a4cb6681f1414978fec47759c5/img/logo.png" alt="uDownloader Logo" width="120"/>
 </p>
 
-[![Python 3.8+](https://img.shields.io/badge/python-3.8%2B-blue)](https://www.python.org/downloads/)
+[![Python 3.9+](https://img.shields.io/badge/python-3.9%2B-blue)](https://www.python.org/downloads/)
 [![Version 0.2.4](https://img.shields.io/badge/version-0.2.4-green)](https://github.com/bolablg/uDownloader/blob/main/docs/CHANGELOG.md)
 [![License MIT](https://img.shields.io/badge/license-MIT-blue)](https://github.com/bolablg/uDownloader/blob/main/LICENSE)
 [![GitHub CI/CD](https://github.com/bolablg/uDownloader/workflows/Tests/badge.svg)](https://github.com/bolablg/uDownloader/actions)
