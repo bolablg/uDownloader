@@ -60,7 +60,7 @@ def download(
     os.makedirs(platform_dir, exist_ok=True)
 
     ydl_opts = {
-        "outtmpl": os.path.join(platform_dir, "%(title)s.%(ext)s"),
+        "outtmpl": os.path.join(platform_dir, "%(title).150B.%(ext)s"),
         "quiet": False,
         "noplaylist": False,  # allow playlist
         "progress_hooks": [_progress_hook] if progress_callback is None else [progress_callback],

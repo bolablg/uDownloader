@@ -59,7 +59,7 @@ class AsyncDownloader:
         os.makedirs(platform_dir, exist_ok=True)
 
         ydl_opts = {
-            "outtmpl": os.path.join(platform_dir, "%(title)s.%(ext)s"),
+            "outtmpl": os.path.join(platform_dir, "%(title).150B.%(ext)s"),
             "quiet": False,
             "noplaylist": False,
             "progress_hooks": [progress_callback] if progress_callback else [],
